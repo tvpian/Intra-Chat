@@ -164,6 +164,33 @@
 
       // Keyboard shortcuts:
       document.addEventListener("keydown", function(event) {
+        // Ctrl + E: Export the last message to the Tech Manual.
+        if (event.ctrlKey && event.key.toLowerCase() === "e") {
+          var lastMsgElem = messages.lastElementChild;
+          if (lastMsgElem) {
+            var exportMsg = lastMsgElem.textContent;
+            var category = prompt("Enter category/label for this Tech Manual entry:");
+            if (category) {
+              var payload = {
+                message: exportMsg,
+                category: category,
+                username: username,
+                timestamp: new Date().toISOString()
+              };
+              fetch('/export', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+              })
+              .then(function(response) { return response.json(); })
+              .then(function(data) { console.log("Export response:", data); })
+              .catch(function(err) { console.error("Export error:", err); });
+            }
+          } else {
+            console.log("No last message to export.");
+          }
+          event.preventDefault();
+        }
         // Ctrl + H: Navigate to History page.
         if (event.ctrlKey && event.key.toLowerCase() === "h") {
           window.location.href = "/history";
@@ -237,6 +264,7 @@
       <li><strong>Up</strong> - Scroll up</li>
       <li><strong>Down</strong> - Scroll down</li>
       <li><strong>Ctrl + c</strong> - Copy last msg</li>
+      <li><strong>Ctrl + e</strong> - Export last msg</li>
     </ul>
   </div>
 </body>
