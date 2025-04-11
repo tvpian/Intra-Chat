@@ -22,14 +22,18 @@
     h1 {
       color: #00adb5;
     }
-    input[type="text"] {
+    /* Changed input style to textarea style */
+    textarea#message {
       padding: 12px;
       width: 500px;
+      height: 80px;
       border: 2px solid #00adb5;
       border-radius: 5px;
       background-color: #16213e;
       color: white;
       margin: 10px 0;
+      resize: vertical;
+      font-family: Arial, sans-serif;
     }
     button {
       padding: 12px 20px;
@@ -59,6 +63,7 @@
     li {
       padding: 10px;
       border-bottom: 1px solid #1a1a2e;
+      white-space: pre-wrap;  /* Preserve newlines in messages */
     }
     li:last-child {
       border-bottom: none;
@@ -104,7 +109,7 @@
       var messages = document.getElementById("messages");
       var input = document.getElementById("message");
 
-      // Focus the input field on page load.
+      // Focus the textarea on page load.
       input.focus();
 
       function sendMessage() {
@@ -119,8 +124,10 @@
         sendMessage();
       });
 
+      // Allow Enter to send, Shift+Enter to add newline.
       input.addEventListener("keypress", function(event) {
-        if (event.key === "Enter") {
+        if (event.key === "Enter" && !event.shiftKey) {
+          event.preventDefault();
           sendMessage();
         }
       });
@@ -183,13 +190,29 @@
           messages.scrollBy({ top: 30, behavior: "smooth" });
           event.preventDefault();
         }
+        // Ctrl + C: Copy the last message to clipboard if nothing is selected.
+        if (event.ctrlKey && event.key.toLowerCase() === "c") {
+          if (window.getSelection().toString() === "") {
+            var lastMsgElem = messages.lastElementChild;
+            if (lastMsgElem) {
+              var lastMsg = lastMsgElem.textContent;
+              navigator.clipboard.writeText(lastMsg).then(function() {
+                console.log("Copied last message to clipboard: " + lastMsg);
+              }).catch(function(err) {
+                console.error("Error copying to clipboard: ", err);
+              });
+            }
+            event.preventDefault();
+          }
+        }
       });
     });
   </script>
 </head>
 <body>
   <h1>MBWH Intra-Chat</h1>
-  <input id="message" type="text" placeholder="Type a message & hit Enter" />
+  <!-- Changed input to textarea for multi-line support -->
+  <textarea id="message" placeholder="Type a message & hit Enter" rows="3"></textarea>
   <button id="sendBtn">Send</button>
   <button onclick="window.location.href='/history'">History</button>
   <ul id="messages"></ul>
@@ -201,9 +224,9 @@
       <li><strong>Enter</strong> - Send text</li>
       <li><strong>Ctrl + h</strong> - Go to history</li>
       <li><strong>Ctrl + u</strong> - Change Username</li>
-      <!-- <li><strong>Backspace</strong> - Go back to chat</li> -->
-      <!-- <li><strong>Up</strong> - Scroll up</li> -->
-      <!-- <li><strong>Down</strong> - Scroll down</li> -->
+      <li><strong>Up</strong> - Scroll up</li>
+      <li><strong>Down</strong> - Scroll down</li>
+      <li><strong>Ctrl + c</strong> - Copy last msg</li>
     </ul>
   </div>
 </body>
