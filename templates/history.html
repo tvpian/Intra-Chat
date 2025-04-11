@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chat History</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #1a1a2e;
+      color: #e0e0e0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
+    h1 {
+      color: #00adb5;
+    }
+    ul {
+      list-style-type: none;
+      padding: 0;
+      width: 1000px;
+      max-height: 250px;
+      overflow-y: auto;
+      border: 1px solid #00adb5;
+      border-radius: 5px;
+      background-color: #0f3460;
+      box-shadow: 0 4px 8px rgba(0, 173, 181, 0.3);
+    }
+    li {
+      padding: 10px;
+      border-bottom: 1px solid #1a1a2e;
+    }
+    li:last-child {
+      border-bottom: none;
+    }
+    small {
+      color: #aaa;
+      font-size: 0.8em;
+    }
+    button {
+      padding: 12px 20px;
+      background-color: #00adb5;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin: 5px;
+      font-weight: bold;
+      transition: 0.3s;
+    }
+    button:hover {
+      background-color: #007a85;
+    }
+        /* Updated Shortcuts Panel - Top Right, shifted left */
+    #shortcuts {
+      position: fixed;
+      top: 10px;
+      right: 200px;  /* Increased value moves it leftwards */
+      background-color: rgba(0, 173, 181, 0.1);
+      padding: 5px 8px;
+      border-radius: 5px;
+      width: 50px;
+      font-size: 0.75em;
+      color: #e0e0e0;
+      z-index: 1000;
+    }
+    #shortcuts h2 {
+      margin: 0 0 5px 0;
+      color: #00adb5;
+      font-size: 0.9em;
+    }
+    #shortcuts ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+    #shortcuts li {
+      margin: 2px 0;
+    }
+  </style>
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      // Automatically scroll the history list to the bottom.
+      var historyList = document.getElementById("historyList");
+      if(historyList) {
+        historyList.scrollTop = historyList.scrollHeight;
+      }
+
+      // Listen for Backspace, ArrowUp, and ArrowDown keys.
+      document.addEventListener("keydown", function(event) {
+        // Backspace goes back to the chat page.
+        if (event.key === "Backspace") {
+          window.location.href = "/";
+          event.preventDefault();
+        }
+        // ArrowUp scrolls up the history list.
+        else if (event.key === "ArrowUp") {
+          if (historyList) {
+            historyList.scrollBy({ top: -50, behavior: "smooth" });
+            event.preventDefault();
+          }
+        }
+        // ArrowDown scrolls down the history list.
+        else if (event.key === "ArrowDown") {
+          if (historyList) {
+            historyList.scrollBy({ top: 50, behavior: "smooth" });
+            event.preventDefault();
+          }
+        }
+      });
+    });
+  </script>
+</head>
+<body>
+  <h1>Chat History</h1>
+  <ul id="historyList">
+    {% for entry in chat_history %}
+      <li>
+        {{ entry.msg }}<br>
+        <small>{{ entry.timestamp[:19].replace("T", " ") }}</small>
+      </li>
+    {% endfor %}
+  </ul>
+  <button onclick="window.location.href='/'">Back to Chat</button>
+  <!-- Shortcuts Panel at Top Right (shifted left a bit) -->
+    <div id="shortcuts">
+        <h2>Shortcuts</h2>
+        <ul>
+          <!-- <li><strong>Enter</strong> - Send text</li> -->
+          <!-- <li><strong>Ctrl + h</strong> - Go to history</li> -->
+          <!-- <li><strong>Ctrl + u</strong> - Change Username</li> -->
+          <li><strong>Backspace</strong> - Go back to chat</li>
+          <li><strong>Up</strong> - Scroll up</li>
+          <li><strong>Down</strong> - Scroll down</li>
+        </ul>
+      </div>
+</body>
+</html>
