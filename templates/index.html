@@ -22,7 +22,7 @@
     h1 {
       color: #00adb5;
     }
-    /* Changed input style to textarea style */
+    /* Changed input style to textarea style for multi-line support */
     textarea#message {
       padding: 12px;
       width: 500px;
@@ -63,7 +63,7 @@
     li {
       padding: 10px;
       border-bottom: 1px solid #1a1a2e;
-      white-space: pre-wrap;  /* Preserve newlines in messages */
+      white-space: pre-wrap;  /* Preserve newlines */
     }
     li:last-child {
       border-bottom: none;
@@ -175,11 +175,6 @@
           location.reload();
           event.preventDefault();
         }
-        // Backspace: Go back to chat.
-        // if (event.key === "Backspace") {
-        //   window.location.href = "/";
-        //   event.preventDefault();
-        // }
         // Arrow Up: Scroll up the messages list.
         if (event.key === "ArrowUp") {
           messages.scrollBy({ top: -30, behavior: "smooth" });
@@ -190,20 +185,35 @@
           messages.scrollBy({ top: 30, behavior: "smooth" });
           event.preventDefault();
         }
-        // Ctrl + C: Copy the last message to clipboard if nothing is selected.
+        // Ctrl + C: Always copy the last message to the clipboard.
+        // Inside the Ctrl+C block:
+        // Ctrl + C: Always copy the last message to the clipboard.
         if (event.ctrlKey && event.key.toLowerCase() === "c") {
-          if (window.getSelection().toString() === "") {
-            var lastMsgElem = messages.lastElementChild;
-            if (lastMsgElem) {
-              var lastMsg = lastMsgElem.textContent;
-              navigator.clipboard.writeText(lastMsg).then(function() {
-                console.log("Copied last message to clipboard: " + lastMsg);
-              }).catch(function(err) {
-                console.error("Error copying to clipboard: ", err);
-              });
+          var lastMsgElem = messages.lastElementChild;
+          if (lastMsgElem) {
+            var lastMsg = lastMsgElem.textContent; // Now defined before use.
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+              navigator.clipboard.writeText(lastMsg)
+                .then(function() { console.log("Copied last message to clipboard:", lastMsg); })
+                .catch(function(err) { console.error("Failed to copy:", err); });
+            } else {
+              // Fallback: use execCommand.
+              var tempInput = document.createElement("textarea");
+              tempInput.value = lastMsg;
+              document.body.appendChild(tempInput);
+              tempInput.select();
+              try {
+                document.execCommand("copy");
+                console.log("Copied last message using fallback:", lastMsg);
+              } catch (err) {
+                console.error("Fallback copy failed:", err);
+              }
+              document.body.removeChild(tempInput);
             }
-            event.preventDefault();
+          } else {
+            console.log("No last message to copy.");
           }
+          event.preventDefault();
         }
       });
     });
