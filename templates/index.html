@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MBWH Intra-Chat</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <style>
+    /* Existing CSS styles */
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #1a1a2e;
+      color: #e0e0e0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      position: relative;
+    }
+    h1 {
+      color: #00adb5;
+    }
+    input[type="text"] {
+      padding: 12px;
+      width: 500px;
+      border: 2px solid #00adb5;
+      border-radius: 5px;
+      background-color: #16213e;
+      color: white;
+      margin: 10px 0;
+    }
+    button {
+      padding: 12px 20px;
+      background-color: #00adb5;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin: 5px;
+      font-weight: bold;
+      transition: 0.3s;
+    }
+    button:hover {
+      background-color: #007a85;
+    }
+    ul {
+      list-style-type: none;
+      padding: 0;
+      width: 1000px;
+      max-height: 250px;
+      overflow-y: auto;
+      border: 1px solid #00adb5;
+      border-radius: 5px;
+      background-color: #0f3460;
+      box-shadow: 0 4px 8px rgba(0, 173, 181, 0.3);
+    }
+    li {
+      padding: 10px;
+      border-bottom: 1px solid #1a1a2e;
+    }
+    li:last-child {
+      border-bottom: none;
+    }
+    /* Updated Shortcuts Panel - Top Right, shifted left */
+    #shortcuts {
+      position: fixed;
+      top: 10px;
+      right: 200px;  /* Increased value moves it leftwards */
+      background-color: rgba(0, 173, 181, 0.1);
+      padding: 5px 8px;
+      border-radius: 5px;
+      width: 50px;
+      font-size: 0.75em;
+      color: #e0e0e0;
+      z-index: 1000;
+    }
+    #shortcuts h2 {
+      margin: 0 0 5px 0;
+      color: #00adb5;
+      font-size: 0.9em;
+    }
+    #shortcuts ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+    #shortcuts li {
+      margin: 2px 0;
+    }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      var socket = io();
+      // Retrieve username from localStorage.
+      var storedUsername = localStorage.getItem("chatUsername");
+      var username = storedUsername || prompt("Enter your name:");
+      if (!storedUsername) {
+        localStorage.setItem("chatUsername", username);
+      }
+      
+      var messages = document.getElementById("messages");
+      var input = document.getElementById("message");
+
+      // Focus the input field on page load.
+      input.focus();
+
+      function sendMessage() {
+        var msg = input.value;
+        if (msg) {
+          socket.send(username + ": " + msg);
+          input.value = "";
+        }
+      }
+
+      document.getElementById("sendBtn").addEventListener("click", function() {
+        sendMessage();
+      });
+
+      input.addEventListener("keypress", function(event) {
+        if (event.key === "Enter") {
+          sendMessage();
+        }
+      });
+
+      socket.on("message", function(data) {
+        try {
+          var parsed = JSON.parse(data);
+          if (Array.isArray(parsed)) {
+            messages.innerHTML = "";
+            var startIndex = parsed.length > 5 ? parsed.length - 5 : 0;
+            for (var i = startIndex; i < parsed.length; i++) {
+              var li = document.createElement("li");
+              li.textContent = parsed[i].msg;
+              messages.appendChild(li);
+            }
+          } else if (parsed && typeof parsed === "object" && "msg" in parsed) {
+            var li = document.createElement("li");
+            li.textContent = parsed.msg;
+            messages.appendChild(li);
+            while (messages.children.length > 5) {
+              messages.removeChild(messages.firstChild);
+            }
+          }
+        } catch (e) {
+          var li = document.createElement("li");
+          li.textContent = data;
+          messages.appendChild(li);
+          while (messages.children.length > 5) {
+            messages.removeChild(messages.firstChild);
+          }
+        }
+        messages.scrollTop = messages.scrollHeight;
+      });
+
+      // Keyboard shortcuts:
+      document.addEventListener("keydown", function(event) {
+        // Ctrl + H: Navigate to History page.
+        if (event.ctrlKey && event.key.toLowerCase() === "h") {
+          window.location.href = "/history";
+          event.preventDefault();
+        }
+        // Ctrl + U: Change Username.
+        if (event.ctrlKey && event.key.toLowerCase() === "u") {
+          localStorage.removeItem("chatUsername");
+          location.reload();
+          event.preventDefault();
+        }
+        // Backspace: Go back to chat.
+        // if (event.key === "Backspace") {
+        //   window.location.href = "/";
+        //   event.preventDefault();
+        // }
+        // Arrow Up: Scroll up the messages list.
+        if (event.key === "ArrowUp") {
+          messages.scrollBy({ top: -30, behavior: "smooth" });
+          event.preventDefault();
+        }
+        // Arrow Down: Scroll down the messages list.
+        if (event.key === "ArrowDown") {
+          messages.scrollBy({ top: 30, behavior: "smooth" });
+          event.preventDefault();
+        }
+      });
+    });
+  </script>
+</head>
+<body>
+  <h1>MBWH Intra-Chat</h1>
+  <input id="message" type="text" placeholder="Type a message & hit Enter" />
+  <button id="sendBtn">Send</button>
+  <button onclick="window.location.href='/history'">History</button>
+  <ul id="messages"></ul>
+  
+  <!-- Shortcuts Panel at Top Right (shifted left a bit) -->
+  <div id="shortcuts">
+    <h2>Shortcuts</h2>
+    <ul>
+      <li><strong>Enter</strong> - Send text</li>
+      <li><strong>Ctrl + h</strong> - Go to history</li>
+      <li><strong>Ctrl + u</strong> - Change Username</li>
+      <!-- <li><strong>Backspace</strong> - Go back to chat</li> -->
+      <!-- <li><strong>Up</strong> - Scroll up</li> -->
+      <!-- <li><strong>Down</strong> - Scroll down</li> -->
+    </ul>
+  </div>
+</body>
+</html>
