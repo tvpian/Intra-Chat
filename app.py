@@ -4,6 +4,9 @@ from flask_cors import CORS
 import json
 import os
 import datetime
+from flask import Flask, render_template, request, jsonify
+import os, json, datetime
+
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all origins
@@ -13,6 +16,19 @@ socketio = SocketIO(app, cors_allowed_origins="*")
 CHAT_HISTORY_FILE = "chat_history.json"
 MAX_MESSAGES = 50           # Maximum number of messages to store
 MESSAGE_EXPIRY_DAYS = 30       # Purge messages older than 5 days
+
+# Define a file to store the tech manual entries.
+TECH_MANUAL_FILE = "tech_manual.json"
+
+def load_tech_manual():
+    if os.path.exists(TECH_MANUAL_FILE):
+        with open(TECH_MANUAL_FILE, "r") as f:
+            return json.load(f)
+    return []
+
+def save_tech_manual(data):
+    with open(TECH_MANUAL_FILE, "w") as f:
+        json.dump(data, f, indent=2)
 
 def load_chat_history():
     """Load chat history from a local JSON file and purge expired messages."""
@@ -78,6 +94,31 @@ def handle_message(msg):
     
     # Broadcast the new message (as a JSON string)
     send(json.dumps(entry), broadcast=True)
+
+@app.route('/export', methods=['POST'])
+def export_message():
+    """
+    Expects a JSON payload of the form:
+    {
+      "message": "sam run command: python script.py",
+      "category": "sam run command",
+      "username": "TVP",
+      "timestamp": "2025-04-11T12:34:56"
+    }
+    """
+    payload = request.get_json()
+    
+    # If no timestamp is included, add the current UTC time.
+    if "timestamp" not in payload:
+        payload["timestamp"] = datetime.datetime.utcnow().isoformat()
+
+    # Load any existing entries, append the new one, and save.
+    tech_manual = load_tech_manual()
+    tech_manual.append(payload)
+    save_tech_manual(tech_manual)
+    
+    return jsonify({"status": "ok", "message": "Message exported to Tech Manual."})
+
 
 if __name__ == '__main__':
     socketio.run(app, host='0.0.0.0', port=5656, debug=True, allow_unsafe_werkzeug=True)
