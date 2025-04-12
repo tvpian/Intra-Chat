@@ -6,6 +6,7 @@ import os
 import datetime
 from flask import Flask, render_template, request, jsonify
 import os, json, datetime
+from ai_engine import summarize_text  # Import the summarization function
 
 
 app = Flask(__name__)
@@ -118,6 +119,18 @@ def export_message():
     save_tech_manual(tech_manual)
     
     return jsonify({"status": "ok", "message": "Message exported to Tech Manual."})
+
+# AI Stack:
+# AI Summarization endoint
+@app.route('/summarize', methods=['POST'])
+def summarize_endpoint():
+    data = request.get_json()
+    if 'text' not in data:
+        return jsonify({"error": "No text provided"}), 400
+    text = data['text']
+    # You can adjust max_length and min_length as needed
+    summary = summarize_text(text, max_length=150, min_length=40)
+    return jsonify({"summary": summary}), 200
 
 
 if __name__ == '__main__':
