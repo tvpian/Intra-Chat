@@ -22,7 +22,7 @@
     h1 {
       color: #00adb5;
     }
-    /* Changed input style to textarea for multi-line support */
+    /* Changed input style to textarea style for multi-line support */
     textarea#message {
       padding: 12px;
       width: 500px;
@@ -68,11 +68,11 @@
     li:last-child {
       border-bottom: none;
     }
-    /* Updated Shortcuts Panel - Top Right, shifted left */
+    /* Updated Shortcuts Panel - Top Right, shifted left a bit */
     #shortcuts {
       position: fixed;
       top: 10px;
-      right: 200px;
+      right: 200px;  /* Adjust as needed */
       background-color: rgba(0, 173, 181, 0.1);
       padding: 5px 8px;
       border-radius: 5px;
@@ -94,7 +94,7 @@
     #shortcuts li {
       margin: 2px 0;
     }
-    /* Modal styles */
+    /* Modal styles (update and custom input modals) remain unchanged */
     .modal-overlay {
       position: fixed;
       top: 0; left: 0;
@@ -146,6 +146,81 @@
   </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
   <script>
+    // Custom modal helper function.
+    function showModal(title, defaultValue = "") {
+      return new Promise(function(resolve) {
+        var overlay = document.getElementById("modalOverlay");
+        var modalTitle = document.getElementById("modalTitle");
+        var modalInput = document.getElementById("modalInput");
+        var okBtn = document.getElementById("modalOkBtn");
+        var cancelBtn = document.getElementById("modalCancelBtn");
+
+        modalTitle.textContent = title;
+        modalInput.value = defaultValue;
+        overlay.style.display = "flex";
+        modalInput.focus();
+
+        function cleanup() {
+          overlay.style.display = "none";
+          okBtn.removeEventListener("click", onOk);
+          cancelBtn.removeEventListener("click", onCancel);
+        }
+
+        function onOk() {
+          cleanup();
+          resolve(modalInput.value.trim());
+          input.focus();  // restore focus to the chat window.
+        }
+
+        function onCancel() {
+          cleanup();
+          resolve(null);
+          input.focus();  // restore focus.
+        }
+
+        okBtn.addEventListener("click", onOk);
+        cancelBtn.addEventListener("click", onCancel);
+
+        modalInput.addEventListener("keypress", function handler(event) {
+          if (event.key === "Enter") {
+            event.preventDefault();
+            onOk();
+            modalInput.removeEventListener("keypress", handler);
+          }
+        });
+      });
+    }
+
+    function showAlert(alertText) {
+      // Create a modal overlay element.
+      var overlay = document.createElement("div");
+      overlay.className = "modal-overlay";
+      overlay.style.display = "flex";
+      // Create the modal box.
+      var modalBox = document.createElement("div");
+      modalBox.className = "modal-box";
+      var h3 = document.createElement("h3");
+      h3.textContent = "ALERT";
+      var p = document.createElement("p");
+      p.textContent = alertText;
+      modalBox.appendChild(h3);
+      modalBox.appendChild(p);
+      overlay.appendChild(modalBox);
+      document.body.appendChild(overlay);
+      
+      // Play alert sound if available.
+      var alertSound = document.getElementById("alertSound");
+      if (alertSound) {
+        alertSound.play();
+      }
+      
+      // Automatically remove the modal after 5 seconds.
+      setTimeout(function() {
+        document.body.removeChild(overlay);
+      }, 5000);
+    }
+
+
     document.addEventListener("DOMContentLoaded", async function() {
       var socket = io();
       // Retrieve username from localStorage.
@@ -158,35 +233,71 @@
       
       var messages = document.getElementById("messages");
       var input = document.getElementById("message");
-  
-      input.focus();
-  
-      function sendMessage() {
-        var msg = input.value;
-        // Check for the /summarize command.
-        if (msg.trim().toLowerCase().startsWith("/summarize")) {
-          input.value = "";
-          handleSummarizeCommand();
-        } else if (msg) {
-          socket.send(username + ": " + msg);
-          input.value = "";
+
+      // Load the last 5 chat messages from localStorage, if any.
+      var storedChat = localStorage.getItem("chatMessages");
+      var chatMessages = [];
+      if (storedChat) {
+        try {
+          chatMessages = JSON.parse(storedChat);
+          chatMessages.forEach(function(msgText) {
+            var li = document.createElement("li");
+            li.textContent = msgText;
+            messages.appendChild(li);
+          });
+        } catch (e) {
+          console.error("Error loading stored chat messages:", e);
         }
       }
-  
+      input.focus();
+
+      function sendMessage() {
+        var msg = input.value;
+        if (msg) {
+          // Detect the alert command.
+          if (msg.trim().toLowerCase().startsWith("/alert")) {
+            // Remove the '/alert' portion and trim the message.
+            var alertMsg = msg.slice(6).trim();
+            if (alertMsg) {
+              // Emit the "alert" event instead of sending a normal message.
+              socket.emit("alert", alertMsg);
+            }
+            input.value = "";
+            return;
+          } else if (msg.trim().toLowerCase().startsWith("/summarize")) {
+            input.value = "";
+            handleSummarizeCommand();
+            return;
+          } else {
+            socket.send(username + ": " + msg);
+            input.value = "";
+          }
+        }
+      }
+
+
       document.getElementById("sendBtn").addEventListener("click", function() {
         sendMessage();
       });
-  
+
       input.addEventListener("keypress", function(event) {
         if (event.key === "Enter" && !event.shiftKey) {
           event.preventDefault();
           sendMessage();
         }
       });
-  
+
       socket.on("message", function(data) {
         try {
           var parsed = JSON.parse(data);
+          // Check if this message is an alert.
+          if (parsed.alert) {
+            // Display the alert modal and play sound.
+            showAlert(parsed.msg);
+            // Optionally, you can update localStorage or not—here we return early.
+            return;
+          }
+          // Normal message handling:
           if (Array.isArray(parsed)) {
             messages.innerHTML = "";
             var startIndex = parsed.length > 5 ? parsed.length - 5 : 0;
@@ -204,6 +315,7 @@
             }
           }
         } catch (e) {
+          // Fallback for when data is not JSON formatted.
           var li = document.createElement("li");
           li.textContent = data;
           messages.appendChild(li);
@@ -211,16 +323,25 @@
             messages.removeChild(messages.firstChild);
           }
         }
+        
+        // Update localStorage for chat history (only for non-alert messages).
+        var currentMessages = [];
+        Array.from(messages.children).forEach(function(child) {
+          currentMessages.push(child.textContent);
+        });
+        localStorage.setItem("chatMessages", JSON.stringify(currentMessages));
+        
         messages.scrollTop = messages.scrollHeight;
       });
-  
+
+
       function handleSummarizeCommand() {
         var messageNodes = Array.from(messages.children);
         var contextMessages = messageNodes.slice(-10).map(function(node) {
           return node.textContent;
         });
         var context = contextMessages.join("\n");
-  
+
         fetch("/summarize", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -242,14 +363,15 @@
           console.error("Summarize error:", err);
         });
       }
-  
-      // Keyboard shortcuts block remains here...
+
+      // Keyboard shortcuts:
       document.addEventListener("keydown", function(event) {
-        // (Other shortcuts are unchanged)
+        // Ctrl + H: Navigate to History page.
         if (event.ctrlKey && event.key.toLowerCase() === "h") {
           window.location.href = "/history";
           event.preventDefault();
         }
+        // Ctrl + U: Change Username via custom modal (no reload).
         if (event.ctrlKey && event.key.toLowerCase() === "u") {
           showModal("Enter new username", username).then(function(newName) {
             if (newName && newName !== username) {
@@ -261,23 +383,54 @@
           });
           event.preventDefault();
         }
-        // if (event.key === "Backspace") {
-        //   window.location.href = "/";
-        //   event.preventDefault();
-        // }
+        // Ctrl + E: Export last message to Tech Manual.
+        if (event.ctrlKey && event.key.toLowerCase() === "e") {
+          var lastMsgElem = messages.lastElementChild;
+          if (lastMsgElem) {
+            var exportMsg = lastMsgElem.textContent;
+            showModal("Enter category/label for Tech Manual", "").then(function(category) {
+              if (category) {
+                var payload = {
+                  message: exportMsg,
+                  category: category,
+                  username: username,
+                  timestamp: new Date().toISOString()
+                };
+                fetch("/export", {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(payload)
+                })
+                .then(function(response) { return response.json(); })
+                .then(function(data) { console.log("Export response:", data); })
+                .catch(function(err) { console.error("Export error:", err); })
+                .finally(function() { input.focus(); });
+              } else {
+                input.focus();
+              }
+            });
+          } else {
+            console.log("No last message to export.");
+            input.focus();
+          }
+          event.preventDefault();
+        }
+        // Arrow Up: Scroll up the messages list.
         if (event.key === "ArrowUp") {
           messages.scrollBy({ top: -30, behavior: "smooth" });
           event.preventDefault();
         }
+        // Arrow Down: Scroll down the messages list.
         if (event.key === "ArrowDown") {
           messages.scrollBy({ top: 30, behavior: "smooth" });
           event.preventDefault();
         }
+
+        // Ctrl + C: Copy only the current user’s last message (without username).
         if (event.ctrlKey && event.key.toLowerCase() === "c") {
           var lastMsgElem = messages.lastElementChild;
           if (lastMsgElem) {
             var lastMsg = lastMsgElem.textContent;
-            // Remove username if present:
             var prefix = username + ":";
             var msgToCopy = lastMsg.startsWith(prefix) ? lastMsg.substring(prefix.length).trim() : lastMsg;
             if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -306,41 +459,59 @@
         }
       });
     });
-    </script>
-  </head>
-  <body>
-    <h1>MBWH Intra-Chat</h1>
-    <textarea id="message" placeholder="Type a message & hit Enter" rows="3"></textarea>
-    <button id="sendBtn">Send</button>
-    <button onclick="window.location.href='/history'">History</button>
-    <ul id="messages"></ul>
-    
-    <!-- Shortcuts Panel at Top Right (shifted left a bit) -->
-    <div id="shortcuts">
-      <h2>Shortcuts</h2>
-      <ul>
-        <li><strong>Enter</strong> - Send text</li>
-        <li><strong>Ctrl + h</strong> - Go to history</li>
-        <li><strong>Ctrl + u</strong> - Change Username</li>
-        <li><strong>Ctrl + e</strong> - Export msg</li>
-        <!-- <li><strong>Backspace</strong> - Go back</li> -->
-        <li><strong>Up</strong> - Scroll up</li>
-        <li><strong>Down</strong> - Scroll down</li>
-        <li><strong>Ctrl + c</strong> - Copy last msg</li>
-      </ul>
-    </div>
-    
-    <!-- Custom Modal HTML -->
-    <div id="modalOverlay" class="modal-overlay" style="display: none;">
-      <div class="modal-box">
-        <h3 id="modalTitle">Input</h3>
-        <input type="text" id="modalInput" placeholder="Type here..." />
-        <div class="modal-buttons">
-          <button id="modalOkBtn">OK</button>
-          <button id="modalCancelBtn">Cancel</button>
-        </div>
+  </script>
+</head>
+<body>
+  <h1>MBWH Intra-Chat</h1>
+  <textarea id="message" placeholder="Type a message & hit Enter" rows="3"></textarea>
+  <button id="sendBtn">Send</button>
+  <button onclick="window.location.href='/history'">History</button>
+  <ul id="messages"></ul>
+  
+  <!-- Shortcuts Panel at Top Right (shifted left a bit) -->
+  <div id="shortcuts">
+    <h2>Shortcuts</h2>
+    <ul>
+      <li><strong>Enter</strong> - Send text</li>
+      <li><strong>Ctrl + h</strong> - Go to history</li>
+      <li><strong>Ctrl + u</strong> - Change Username</li>
+      <li><strong>Ctrl + e</strong> - Export msg</li>
+      <li><strong>Up</strong> - Scroll up</li>
+      <li><strong>Down</strong> - Scroll down</li>
+      <li><strong>Ctrl + c</strong> - Copy last msg</li>
+    </ul>
+  </div>
+  
+  <!-- Custom Modal HTML -->
+  <div id="modalOverlay" class="modal-overlay" style="display: none;">
+    <div class="modal-box">
+      <h3 id="modalTitle">Input</h3>
+      <input type="text" id="modalInput" placeholder="Type here..." />
+      <div class="modal-buttons">
+        <button id="modalOkBtn">OK</button>
+        <button id="modalCancelBtn">Cancel</button>
       </div>
     </div>
-  </body>
-  </html>
+  </div>
   
+  <!-- Update Modal HTML for "What's New" -->
+  <div id="updateModal" class="modal-overlay" style="display: none;">
+    <div class="modal-box">
+      <h3 id="updateTitle">What's New in MBWH Intra-Chat</h3>
+      <div id="updateContent">
+        <p>Version 1.0.1:</p>
+        <ul>
+          <li>Tech Manual export functionality added</li>
+          <li>Agentic AI commands integrated</li>
+          <li>Custom modals for username and export input</li>
+          <li>Enhanced keyboard shortcuts</li>
+        </ul>
+      </div>
+      <div class="modal-buttons">
+        <button id="updateOkBtn">Got It!</button>
+      </div>
+    </div>
+  </div>
+  <audio id="alertSound" src="alert.mp3" preload="auto"></audio>
+</body>
+</html>

@@ -132,6 +132,13 @@ def summarize_endpoint():
     summary = summarize_text(text, max_length=150, min_length=40)
     return jsonify({"summary": summary}), 200
 
+@socketio.on('alert')
+def handle_alert(alert_msg):
+    print("Alert received:", alert_msg)
+    # Broadcast the alert message to all clients with an "alert" flag.
+    send(json.dumps({"msg": "ALERT: " + alert_msg, "alert": True}), broadcast=True)
+
+
 
 if __name__ == '__main__':
     socketio.run(app, host='0.0.0.0', port=5656, debug=True, allow_unsafe_werkzeug=True)
