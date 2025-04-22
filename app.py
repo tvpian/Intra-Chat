@@ -7,11 +7,24 @@ import datetime
 from flask import Flask, render_template, request, jsonify
 import os, json, datetime
 from ai_engine import summarize_text  # Import the summarization function
+from werkzeug.utils import secure_filename
+from flask import send_from_directory, url_for
 
+# just after your existing imports:
+UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), 'uploads')
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+ALLOWED_EXTENSIONS = {
+    'png','jpg','jpeg','gif',
+    'txt','pdf','zip','docx','xlsx',
+    # now include code/web formats:
+    'py','js','css','html','json','md'
+}
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all origins
 socketio = SocketIO(app, cors_allowed_origins="*")
+
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 # Configuration for persistent storage
 CHAT_HISTORY_FILE = "chat_history.json"
@@ -20,6 +33,11 @@ MESSAGE_EXPIRY_DAYS = 30       # Purge messages older than 5 days
 
 # Define a file to store the tech manual entries.
 TECH_MANUAL_FILE = "tech_manual.json"
+
+
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.',1)[1].lower() in ALLOWED_EXTENSIONS
 
 def load_tech_manual():
     if os.path.exists(TECH_MANUAL_FILE):
@@ -69,6 +87,48 @@ def history():
     global chat_history
     chat_history = load_chat_history()
     return render_template('history.html', chat_history=chat_history)
+
+@app.route('/upload', methods=['POST'])
+def upload_file():
+    if 'file' not in request.files:
+        return jsonify({'error':'No file part'}), 400
+    f = request.files['file']
+    if f.filename == '' or not allowed_file(f.filename):
+        return jsonify({'error':'Invalid filename'}), 400
+
+    # make the filename unique
+    name = secure_filename(f"{datetime.datetime.utcnow().timestamp()}_{f.filename}")
+    save_path = os.path.join(app.config['UPLOAD_FOLDER'], name)
+    f.save(save_path)
+
+    # build URL
+    url = url_for('uploaded_file', filename=name)
+    return jsonify({'url': url, 'name': f.filename}), 200
+
+
+@app.route('/manual')
+def manual():
+    """
+    Renders the Tech Manual page. If ?q=term is provided, filters entries.
+    """
+    # load all entries
+    tech_manual = load_tech_manual()
+
+    # optional reverse‐search via query param “q”
+    q = request.args.get('q', '').strip().lower()
+    if q:
+        tech_manual = [
+            e for e in tech_manual
+            if q in e.get('message','').lower()
+            or q in e.get('category','').lower()
+            or q in e.get('username','').lower()
+        ]
+
+    # pass both entries and the search term back to template
+    return render_template('manual.html',
+                           entries=tech_manual,
+                           query=q)
+
 
 @socketio.on('connect')
 def handle_connect():
@@ -138,7 +198,14 @@ def handle_alert(alert_msg):
     # Broadcast the alert message to all clients with an "alert" flag.
     send(json.dumps({"msg": "ALERT: " + alert_msg, "alert": True}), broadcast=True)
 
+@app.route('/uploads/<filename>')
+def uploaded_file(filename):
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+
+
 
 
 if __name__ == '__main__':
     socketio.run(app, host='0.0.0.0', port=5656, debug=True, allow_unsafe_werkzeug=True)
+
+

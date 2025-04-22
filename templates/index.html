@@ -6,7 +6,7 @@
   <title>MBWH Intra-Chat</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
   <style>
-    /* Existing CSS styles */
+    /* === YOUR ORIGINAL CSS === */
     body {
       font-family: Arial, sans-serif;
       background-color: #1a1a2e;
@@ -19,10 +19,7 @@
       margin: 0;
       position: relative;
     }
-    h1 {
-      color: #00adb5;
-    }
-    /* Changed input style to textarea style for multi-line support */
+    h1 { color: #00adb5; }
     textarea#message {
       padding: 12px;
       width: 500px;
@@ -46,9 +43,7 @@
       font-weight: bold;
       transition: 0.3s;
     }
-    button:hover {
-      background-color: #007a85;
-    }
+    button:hover { background-color: #007a85; }
     ul {
       list-style-type: none;
       padding: 0;
@@ -63,16 +58,13 @@
     li {
       padding: 10px;
       border-bottom: 1px solid #1a1a2e;
-      white-space: pre-wrap;  /* Preserve newlines */
+      white-space: pre-wrap;
     }
-    li:last-child {
-      border-bottom: none;
-    }
-    /* Updated Shortcuts Panel - Top Right, shifted left a bit */
+    li:last-child { border-bottom: none; }
     #shortcuts {
       position: fixed;
       top: 10px;
-      right: 200px;  /* Adjust as needed */
+      right: 200px;
       background-color: rgba(0, 173, 181, 0.1);
       padding: 5px 8px;
       border-radius: 5px;
@@ -91,10 +83,7 @@
       margin: 0;
       padding: 0;
     }
-    #shortcuts li {
-      margin: 2px 0;
-    }
-    /* Modal styles (update and custom input modals) remain unchanged */
+    #shortcuts li { margin: 2px 0; }
     .modal-overlay {
       position: fixed;
       top: 0; left: 0;
@@ -118,7 +107,8 @@
       margin-top: 0;
       color: #00adb5;
     }
-    .modal-box input[type="text"] {
+    .modal-box input[type="text"],
+    .modal-box input[type="file"] {
       width: 100%;
       padding: 10px;
       margin: 10px 0;
@@ -143,347 +133,68 @@
     .modal-buttons button:hover {
       background-color: #007a85;
     }
+    #quickActions {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .action-btn {
+      background: #00adb5;
+      border: none;
+      border-radius: 4px;
+      padding: 6px 10px;
+      color: white;
+      font-size: 0.9em;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .action-btn:hover {
+      background: #007a85;
+    }
   </style>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
-  <script>
-    // Custom modal helper function.
-    function showModal(title, defaultValue = "") {
-      return new Promise(function(resolve) {
-        var overlay = document.getElementById("modalOverlay");
-        var modalTitle = document.getElementById("modalTitle");
-        var modalInput = document.getElementById("modalInput");
-        var okBtn = document.getElementById("modalOkBtn");
-        var cancelBtn = document.getElementById("modalCancelBtn");
-
-        modalTitle.textContent = title;
-        modalInput.value = defaultValue;
-        overlay.style.display = "flex";
-        modalInput.focus();
-
-        function cleanup() {
-          overlay.style.display = "none";
-          okBtn.removeEventListener("click", onOk);
-          cancelBtn.removeEventListener("click", onCancel);
-        }
-
-        function onOk() {
-          cleanup();
-          resolve(modalInput.value.trim());
-          input.focus();  // restore focus to the chat window.
-        }
-
-        function onCancel() {
-          cleanup();
-          resolve(null);
-          input.focus();  // restore focus.
-        }
-
-        okBtn.addEventListener("click", onOk);
-        cancelBtn.addEventListener("click", onCancel);
-
-        modalInput.addEventListener("keypress", function handler(event) {
-          if (event.key === "Enter") {
-            event.preventDefault();
-            onOk();
-            modalInput.removeEventListener("keypress", handler);
-          }
-        });
-      });
-    }
-
-    function showAlert(alertText) {
-      // Create a modal overlay element.
-      var overlay = document.createElement("div");
-      overlay.className = "modal-overlay";
-      overlay.style.display = "flex";
-      // Create the modal box.
-      var modalBox = document.createElement("div");
-      modalBox.className = "modal-box";
-      var h3 = document.createElement("h3");
-      h3.textContent = "ALERT";
-      var p = document.createElement("p");
-      p.textContent = alertText;
-      modalBox.appendChild(h3);
-      modalBox.appendChild(p);
-      overlay.appendChild(modalBox);
-      document.body.appendChild(overlay);
-      
-      // Play alert sound if available.
-      var alertSound = document.getElementById("alertSound");
-      if (alertSound) {
-        alertSound.play();
-      }
-      
-      // Automatically remove the modal after 5 seconds.
-      setTimeout(function() {
-        document.body.removeChild(overlay);
-      }, 5000);
-    }
-
-
-    document.addEventListener("DOMContentLoaded", async function() {
-      var socket = io();
-      // Retrieve username from localStorage.
-      var storedUsername = localStorage.getItem("chatUsername");
-      var username = storedUsername || await showModal("Enter your name:");
-      if (!storedUsername) {
-        if (!username) { username = "Anonymous"; }
-        localStorage.setItem("chatUsername", username);
-      }
-      
-      var messages = document.getElementById("messages");
-      var input = document.getElementById("message");
-
-      // Load the last 5 chat messages from localStorage, if any.
-      var storedChat = localStorage.getItem("chatMessages");
-      var chatMessages = [];
-      if (storedChat) {
-        try {
-          chatMessages = JSON.parse(storedChat);
-          chatMessages.forEach(function(msgText) {
-            var li = document.createElement("li");
-            li.textContent = msgText;
-            messages.appendChild(li);
-          });
-        } catch (e) {
-          console.error("Error loading stored chat messages:", e);
-        }
-      }
-      input.focus();
-
-      function sendMessage() {
-        var msg = input.value;
-        if (msg) {
-          // Detect the alert command.
-          if (msg.trim().toLowerCase().startsWith("/alert")) {
-            // Remove the '/alert' portion and trim the message.
-            var alertMsg = msg.slice(6).trim();
-            if (alertMsg) {
-              // Emit the "alert" event instead of sending a normal message.
-              socket.emit("alert", alertMsg);
-            }
-            input.value = "";
-            return;
-          } else if (msg.trim().toLowerCase().startsWith("/summarize")) {
-            input.value = "";
-            handleSummarizeCommand();
-            return;
-          } else {
-            socket.send(username + ": " + msg);
-            input.value = "";
-          }
-        }
-      }
-
-
-      document.getElementById("sendBtn").addEventListener("click", function() {
-        sendMessage();
-      });
-
-      input.addEventListener("keypress", function(event) {
-        if (event.key === "Enter" && !event.shiftKey) {
-          event.preventDefault();
-          sendMessage();
-        }
-      });
-
-      socket.on("message", function(data) {
-        try {
-          var parsed = JSON.parse(data);
-          // Check if this message is an alert.
-          if (parsed.alert) {
-            // Display the alert modal and play sound.
-            showAlert(parsed.msg);
-            // Optionally, you can update localStorage or not—here we return early.
-            return;
-          }
-          // Normal message handling:
-          if (Array.isArray(parsed)) {
-            messages.innerHTML = "";
-            var startIndex = parsed.length > 5 ? parsed.length - 5 : 0;
-            for (var i = startIndex; i < parsed.length; i++) {
-              var li = document.createElement("li");
-              li.textContent = parsed[i].msg;
-              messages.appendChild(li);
-            }
-          } else if (parsed && typeof parsed === "object" && "msg" in parsed) {
-            var li = document.createElement("li");
-            li.textContent = parsed.msg;
-            messages.appendChild(li);
-            while (messages.children.length > 5) {
-              messages.removeChild(messages.firstChild);
-            }
-          }
-        } catch (e) {
-          // Fallback for when data is not JSON formatted.
-          var li = document.createElement("li");
-          li.textContent = data;
-          messages.appendChild(li);
-          while (messages.children.length > 5) {
-            messages.removeChild(messages.firstChild);
-          }
-        }
-        
-        // Update localStorage for chat history (only for non-alert messages).
-        var currentMessages = [];
-        Array.from(messages.children).forEach(function(child) {
-          currentMessages.push(child.textContent);
-        });
-        localStorage.setItem("chatMessages", JSON.stringify(currentMessages));
-        
-        messages.scrollTop = messages.scrollHeight;
-      });
-
-
-      function handleSummarizeCommand() {
-        var messageNodes = Array.from(messages.children);
-        var contextMessages = messageNodes.slice(-10).map(function(node) {
-          return node.textContent;
-        });
-        var context = contextMessages.join("\n");
-
-        fetch("/summarize", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text: context })
-        })
-        .then(function(response) { return response.json(); })
-        .then(function(data) {
-          if (data.summary) {
-            var li = document.createElement("li");
-            li.textContent = "Agent: " + data.summary;
-            li.style.fontStyle = "italic";
-            messages.appendChild(li);
-            messages.scrollTop = messages.scrollHeight;
-          } else {
-            console.error("No summary received");
-          }
-        })
-        .catch(function(err) {
-          console.error("Summarize error:", err);
-        });
-      }
-
-      // Keyboard shortcuts:
-      document.addEventListener("keydown", function(event) {
-        // Ctrl + H: Navigate to History page.
-        if (event.ctrlKey && event.key.toLowerCase() === "h") {
-          window.location.href = "/history";
-          event.preventDefault();
-        }
-        // Ctrl + U: Change Username via custom modal (no reload).
-        if (event.ctrlKey && event.key.toLowerCase() === "u") {
-          showModal("Enter new username", username).then(function(newName) {
-            if (newName && newName !== username) {
-              username = newName;
-              localStorage.setItem("chatUsername", username);
-              console.log("Username changed to:", username);
-            }
-            input.focus();
-          });
-          event.preventDefault();
-        }
-        // Ctrl + E: Export last message to Tech Manual.
-        if (event.ctrlKey && event.key.toLowerCase() === "e") {
-          var lastMsgElem = messages.lastElementChild;
-          if (lastMsgElem) {
-            var exportMsg = lastMsgElem.textContent;
-            showModal("Enter category/label for Tech Manual", "").then(function(category) {
-              if (category) {
-                var payload = {
-                  message: exportMsg,
-                  category: category,
-                  username: username,
-                  timestamp: new Date().toISOString()
-                };
-                fetch("/export", {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify(payload)
-                })
-                .then(function(response) { return response.json(); })
-                .then(function(data) { console.log("Export response:", data); })
-                .catch(function(err) { console.error("Export error:", err); })
-                .finally(function() { input.focus(); });
-              } else {
-                input.focus();
-              }
-            });
-          } else {
-            console.log("No last message to export.");
-            input.focus();
-          }
-          event.preventDefault();
-        }
-        // Arrow Up: Scroll up the messages list.
-        if (event.key === "ArrowUp") {
-          messages.scrollBy({ top: -30, behavior: "smooth" });
-          event.preventDefault();
-        }
-        // Arrow Down: Scroll down the messages list.
-        if (event.key === "ArrowDown") {
-          messages.scrollBy({ top: 30, behavior: "smooth" });
-          event.preventDefault();
-        }
-
-        // Ctrl + C: Copy only the current user’s last message (without username).
-        if (event.ctrlKey && event.key.toLowerCase() === "c") {
-          var lastMsgElem = messages.lastElementChild;
-          if (lastMsgElem) {
-            var lastMsg = lastMsgElem.textContent;
-            var prefix = username + ":";
-            var msgToCopy = lastMsg.startsWith(prefix) ? lastMsg.substring(prefix.length).trim() : lastMsg;
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-              navigator.clipboard.writeText(msgToCopy)
-                .then(function() { console.log("Copied last message to clipboard:", msgToCopy); input.focus(); })
-                .catch(function(err) { console.error("Failed to copy:", err); input.focus(); });
-            } else {
-              var tempInput = document.createElement("textarea");
-              tempInput.value = msgToCopy;
-              document.body.appendChild(tempInput);
-              tempInput.select();
-              try {
-                document.execCommand("copy");
-                console.log("Copied last message using fallback:", msgToCopy);
-              } catch (err) {
-                console.error("Fallback copy failed:", err);
-              }
-              document.body.removeChild(tempInput);
-              input.focus();
-            }
-          } else {
-            console.log("No last message to copy.");
-            input.focus();
-          }
-          event.preventDefault();
-        }
-      });
-    });
-  </script>
 </head>
 <body>
   <h1>MBWH Intra-Chat</h1>
-  <textarea id="message" placeholder="Type a message & hit Enter" rows="3"></textarea>
+
+  <!-- Chat input -->
+  <textarea id="message" placeholder="Type a message & hit Enter" rows="3" autofocus></textarea>
+
+  <!-- Quick action buttons -->
+  <div id="quickActions">
+    <button class="action-btn" data-cmd="/search ">🔍 Search</button>
+    <button class="action-btn" data-cmd="/alert ">🚨 Alert</button>
+    <button class="action-btn" data-cmd="/summarize ">📝 Summarize</button>
+    <button id="uploadBtn">UPLOAD</button>
+  </div>
+
+  <!-- Hidden file input -->
+  <input type="file" id="fileInput" style="display:none;" />
+
+  <!-- Control buttons -->
   <button id="sendBtn">Send</button>
-  <button onclick="window.location.href='/history'">History</button>
+  <button id="historyBtn">History</button>
+  <button id="manualBtn" style="display:none;">Tech Manual</button>
+
+  <!-- Chat messages -->
   <ul id="messages"></ul>
-  
-  <!-- Shortcuts Panel at Top Right (shifted left a bit) -->
+
+  <!-- Shortcuts panel -->
   <div id="shortcuts">
     <h2>Shortcuts</h2>
     <ul>
       <li><strong>Enter</strong> - Send text</li>
       <li><strong>Ctrl + h</strong> - Go to history</li>
+      <li><strong>Ctrl + m</strong> - Tech Manual</li>
       <li><strong>Ctrl + u</strong> - Change Username</li>
       <li><strong>Ctrl + e</strong> - Export msg</li>
-      <li><strong>Up</strong> - Scroll up</li>
-      <li><strong>Down</strong> - Scroll down</li>
-      <li><strong>Ctrl + c</strong> - Copy last msg</li>
+      <li><strong>/search</strong> - Inline search</li>
+      <li><strong>Up/Down</strong> - Scroll</li>
+      <li><strong>Ctrl + c</strong> - Copy last</li>
     </ul>
   </div>
-  
-  <!-- Custom Modal HTML -->
-  <div id="modalOverlay" class="modal-overlay" style="display: none;">
+
+  <!-- Generic input modal -->
+  <div id="modalOverlay" class="modal-overlay" style="display:none;">
     <div class="modal-box">
       <h3 id="modalTitle">Input</h3>
       <input type="text" id="modalInput" placeholder="Type here..." />
@@ -493,9 +204,21 @@
       </div>
     </div>
   </div>
-  
-  <!-- Update Modal HTML for "What's New" -->
-  <div id="updateModal" class="modal-overlay" style="display: none;">
+
+  <!-- Upload modal -->
+  <div id="uploadModal" class="modal-overlay" style="display:none;">
+    <div class="modal-box">
+      <h3>Upload File</h3>
+      <input type="file" id="fileInputModal" />
+      <div class="modal-buttons">
+        <button id="uploadConfirmBtn">Upload</button>
+        <button id="uploadCancelBtn">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- "What's New" modal -->
+  <div id="updateModal" class="modal-overlay" style="display:none;">
     <div class="modal-box">
       <h3 id="updateTitle">What's New in MBWH Intra-Chat</h3>
       <div id="updateContent">
@@ -505,13 +228,331 @@
           <li>Agentic AI commands integrated</li>
           <li>Custom modals for username and export input</li>
           <li>Enhanced keyboard shortcuts</li>
+          <li>File & image sharing</li>
         </ul>
       </div>
       <div class="modal-buttons">
-        <button id="updateOkBtn">Got It!</button>
+        <button id="updateOkBtn">Got It!</button>
       </div>
     </div>
   </div>
-  <audio id="alertSound" src="alert.mp3" preload="auto"></audio>
+
+  <!-- Notification sound -->
+  <audio id="alertSound" preload="auto">
+    <source src="/static/alert.mp3" type="audio/mpeg">
+    <source src="/static/alert.ogg" type="audio/ogg">
+  </audio>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", async function() {
+      // --- Grab DOM & Socket ---
+      const socket         = io();
+      const messages       = document.getElementById("messages");
+      const input          = document.getElementById("message");
+      const fileInput      = document.getElementById("fileInput");
+      const fileModalInput = document.getElementById("fileInputModal");
+      const uploadBtn      = document.getElementById("uploadBtn");
+      const uploadModal    = document.getElementById("uploadModal");
+      const uploadConfirm  = document.getElementById("uploadConfirmBtn");
+      const uploadCancel   = document.getElementById("uploadCancelBtn");
+      const sendBtn        = document.getElementById("sendBtn");
+      const historyBtn     = document.getElementById("historyBtn");
+      const manualBtn      = document.getElementById("manualBtn");
+      const alertSound     = document.getElementById("alertSound");
+
+      // --- Username Prompt ---
+      let username = localStorage.getItem("chatUsername");
+      if (!username) {
+        username = await showModal("Enter your name:") || "Anonymous";
+        localStorage.setItem("chatUsername", username);
+      }
+
+      // --- Unlock Audio on First Click ---
+      document.body.addEventListener("click", () => {
+        alertSound.play().then(() => alertSound.pause()).catch(()=>{});
+      }, { once: true });
+
+      // --- Quick Actions ---
+      document.querySelectorAll('.action-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          input.value = btn.dataset.cmd;
+          input.focus();
+          input.setSelectionRange(input.value.length, input.value.length);
+        });
+      });
+
+      // --- Upload Modal Wiring ---
+      uploadBtn.addEventListener("click", () => uploadModal.style.display = "flex");
+      uploadCancel.addEventListener("click", () => {
+        uploadModal.style.display = "none";
+        fileModalInput.value     = "";
+        input.focus();
+      });
+      fileModalInput.addEventListener("change", () => {
+        fileInput.files = fileModalInput.files;
+      });
+      uploadConfirm.addEventListener("click", () => {
+        uploadModal.style.display = "none";
+        fileInput.dispatchEvent(new Event("change"));
+      });
+
+      // --- File Upload Handler ---
+      fileInput.addEventListener("change", function() {
+        const file = this.files[0];
+        if (!file) return;
+        const form = new FormData();
+        form.append("file", file);
+        fetch("/upload", { method: "POST", body: form })
+          .then(r => r.json())
+          .then(data => {
+            if (data.url) {
+              socket.send(JSON.stringify({
+                msg:    data.url,
+                isFile: true,
+                name:   data.name
+              }));
+            }
+          })
+          .finally(() => {
+            fileInput.value = "";
+            input.focus();
+          });
+      });
+
+      // --- showAlert: reuse your modal styles ---
+      function showAlert(alertText) {
+        const overlay = document.createElement("div");
+        overlay.className = "modal-overlay";
+        const box = document.createElement("div");
+        box.className = "modal-box";
+        const h3 = document.createElement("h3");
+        h3.textContent = "ALERT";
+        const p = document.createElement("p");
+        p.textContent = alertText;
+        box.appendChild(h3);
+        box.appendChild(p);
+        overlay.appendChild(box);
+        document.body.appendChild(overlay);
+
+        // play sound
+        alertSound.play().catch(()=>{});
+
+        // auto-dismiss
+        setTimeout(() => document.body.removeChild(overlay), 5000);
+      }
+
+      // --- sendMessage with commands ---
+      function sendMessage() {
+        const raw = input.value.trim();
+        if (!raw) return;
+        const l = raw.toLowerCase();
+        if (l.startsWith("/search")) {
+          const m = raw.match(/^\/search\s+(?:"([^"]+)"|(.+))$/i);
+          const term = m ? (m[1]||m[2]).trim() : "";
+          if (term) window.location.href = "/manual?q=" + encodeURIComponent(term);
+        }
+        else if (l.startsWith("/alert")) {
+          const msg = raw.slice(6).trim();
+          if (msg) socket.emit("alert", msg);
+        }
+        else if (l.startsWith("/summarize")) {
+          handleSummarizeCommand();
+        }
+        else {
+          socket.send(username + ": " + raw);
+        }
+        input.value = "";
+      }
+
+      // --- Bind Sending ---
+      sendBtn.addEventListener("click", sendMessage);
+      input.addEventListener("keypress", e => {
+        if (e.key === "Enter" && !e.shiftKey) {
+          e.preventDefault();
+          sendMessage();
+        }
+      });
+
+      // --- Navigation Buttons ---
+      historyBtn.addEventListener("click", () => window.location.href = "/history");
+      manualBtn.addEventListener("click",  () => window.location.href = "/manual");
+
+      // --- Keyboard Shortcuts & Focus Logic ---
+      let ignoreBlur = false;
+      const allowed = new Set([
+        'fileInput','sendBtn','historyBtn','manualBtn',
+        'modalInput','modalOkBtn','modalCancelBtn',
+        'updateOkBtn','fileInputModal','uploadConfirmBtn','uploadCancelBtn'
+      ]);
+      messages.addEventListener("mousedown", ()=> ignoreBlur = true);
+      input.addEventListener("blur", ()=>{
+        setTimeout(()=>{
+          if (ignoreBlur) { ignoreBlur = false; return; }
+          const ae = document.activeElement;
+          if (allowed.has(ae.id)|| messages.contains(ae)) return;
+          input.focus();
+        }, 0);
+      });
+      document.addEventListener("keydown", e => {
+        if (e.ctrlKey && e.key==="h") { e.preventDefault(); historyBtn.click(); }
+        if (e.ctrlKey && e.key==="m") { e.preventDefault(); manualBtn.click(); }
+        if (e.ctrlKey && e.key==="u") {
+          e.preventDefault();
+          showModal("Enter new username", username)
+            .then(n=> n && n!==username && (username=n, localStorage.setItem("chatUsername",n)))
+            .finally(()=> input.focus());
+        }
+        if (e.ctrlKey && e.key==="e") {
+          e.preventDefault();
+          const last = messages.lastElementChild?.textContent;
+          if (last) {
+            showModal("Category for Tech Manual","")
+              .then(cat=>{
+                if (cat) fetch("/export",{
+                  method:'POST',
+                  headers:{'Content-Type':'application/json'},
+                  body:JSON.stringify({
+                    message: last,
+                    category:cat,
+                    username:username,
+                    timestamp:new Date().toISOString()
+                  })
+                });
+              })
+              .finally(()=> input.focus());
+          }
+        }
+        if (e.key==="ArrowUp")   { e.preventDefault(); messages.scrollBy({top:-30,behavior:'smooth'}); }
+        if (e.key==="ArrowDown") { e.preventDefault(); messages.scrollBy({top:30,behavior:'smooth'}); }
+        if (e.ctrlKey && e.key==="c") {
+          e.preventDefault();
+          const last = messages.lastElementChild?.textContent||"";
+          const prefix = username+":";
+          const text   = last.startsWith(prefix)? last.slice(prefix.length).trim(): last;
+          navigator.clipboard?.writeText(text).catch(()=>{});
+          input.focus();
+        }
+      });
+
+      // --- Prune & Store ---
+      function pruneAndStore() {
+        while(messages.children.length>5) messages.removeChild(messages.firstChild);
+        const arr = Array.from(messages.children).map(li=>li.textContent);
+        localStorage.setItem("chatMessages",JSON.stringify(arr));
+        messages.scrollTop = messages.scrollHeight;
+      }
+
+      // --- Render Entries (non-alert) ---
+      function renderEntry(entry) {
+        let inner=null;
+        try { inner = JSON.parse(entry.msg); } catch{}
+        const li = document.createElement("li");
+        if (inner?.isFile) {
+          const url=inner.msg, name=inner.name;
+          const ext=url.split(".").pop().toLowerCase();
+          if (["png","jpg","jpeg","gif"].includes(ext)) {
+            const img=document.createElement("img");
+            img.src=url; img.style.maxWidth="300px"; img.style.display="block";
+            li.appendChild(img);
+            const cap=document.createElement("div");
+            cap.textContent=name; cap.style.color="#aaa"; cap.style.fontSize="0.8em";
+            cap.style.marginTop="4px"; li.appendChild(cap);
+          } else {
+            const a=document.createElement("a");
+            a.href=url; a.textContent=name; a.download=name; a.style.color="#00adb5";
+            li.appendChild(a);
+          }
+        } else {
+          li.textContent=entry.msg;
+        }
+        messages.appendChild(li);
+      }
+
+      // --- Summarize ---
+      function handleSummarizeCommand(){
+        const ctx=Array.from(messages.children).slice(-10)
+                    .map(n=>n.textContent).join("\n");
+        fetch("/summarize",{
+          method:"POST",
+          headers:{"Content-Type":"application/json"},
+          body:JSON.stringify({text:ctx})
+        })
+        .then(r=>r.json())
+        .then(d=>{
+          if(d.summary){
+            const li=document.createElement("li");
+            li.textContent="Agent: "+d.summary;
+            li.style.fontStyle="italic";
+            messages.appendChild(li);
+            messages.scrollTop=messages.scrollHeight;
+          }
+        })
+        .catch(()=>{});
+      }
+
+      // --- Generic Input Modal ---
+      function showModal(title, defaultValue=""){
+        return new Promise(resolve=>{
+          const ov=document.getElementById("modalOverlay");
+          const t =document.getElementById("modalTitle");
+          const inp=document.getElementById("modalInput");
+          const ok=document.getElementById("modalOkBtn");
+          const ca=document.getElementById("modalCancelBtn");
+          t.textContent=title; inp.value=defaultValue;
+          ov.style.display="flex"; inp.focus();
+          function cleanup(){
+            ov.style.display="none";
+            ok.removeEventListener("click",onOk);
+            ca.removeEventListener("click",onCancel);
+          }
+          function onOk(){
+            cleanup(); resolve(inp.value.trim()); input.focus();
+          }
+          function onCancel(){
+            cleanup(); resolve(null); input.focus();
+          }
+          ok.addEventListener("click",onOk);
+          ca.addEventListener("click",onCancel);
+          inp.addEventListener("keypress",function h(e){
+            if(e.key==="Enter"){ e.preventDefault(); onOk(); inp.removeEventListener("keypress",h);}
+          });
+        });
+      }
+
+      // --- Load persisted chat & scroll ---
+      const stored=localStorage.getItem("chatMessages");
+      if(stored){
+        try{ JSON.parse(stored).forEach(msg=>{
+          const li=document.createElement("li");
+          li.textContent=msg; messages.appendChild(li);
+        });}catch{}
+      }
+      messages.scrollTop=messages.scrollHeight;
+
+      // --- Socket Handler with alert first ---
+      socket.on("message", data=>{
+        try {
+          const p = JSON.parse(data);
+          if (p.alert) {
+            showAlert(p.msg);
+            return;
+          }
+          if (Array.isArray(p)) {
+            messages.innerHTML = "";
+            p.forEach(renderEntry);
+            pruneAndStore();
+          } else {
+            renderEntry(p);
+            pruneAndStore();
+          }
+        } catch {
+          const li=document.createElement("li");
+          li.textContent=data; messages.appendChild(li);
+          pruneAndStore();
+        }
+      });
+    });
+  </script>
 </body>
 </html>
