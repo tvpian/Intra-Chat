@@ -16,7 +16,8 @@ Intra-Chat is a lightweight intra-network chat application designed for seamless
 ## Demo
 
 ![Intra-Chat Demo](demo.gif)  
-*Note: Replace this with a GIF or image showcasing your app.*
+![Screenshot 2025-07-04 184716](https://github.com/user-attachments/assets/d4d88127-d014-4e30-80a4-599df6d73b4f)
+
 
 ## Getting Started
 
