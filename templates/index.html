@@ -6,6 +6,35 @@
   <title>MBWH Intra-Chat</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
   <style>
+    /* ——— MOBILE RESPONSIVE OVERRIDES ——— */
+      @media only screen and (max-width: 600px) {
+        body {
+          justify-content: flex-start;
+          padding: 10px;
+        }
+        textarea#message {
+          width: 90%!important;
+        }
+        ul {
+          width: 90%!important;
+          max-height: 60vh;
+        }
+        #quickActions,
+        #controls {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 6px;
+          justify-content: center;
+        }
+        button,
+        .action-btn {
+          padding: 10px 14px;
+          font-size: 0.9em;
+        }
+        #shortcuts {
+          display: none; /* hide on mobile for space */
+        }
+      }
     /* === YOUR ORIGINAL CSS === */
     body {
       font-family: Arial, sans-serif;
@@ -59,8 +88,36 @@
       padding: 10px;
       border-bottom: 1px solid #1a1a2e;
       white-space: pre-wrap;
+      position: relative;
+    }
+    li:hover {
+      background-color: rgba(0, 173, 181, 0.1);
+    }
+    li:hover .copy-btn {
+      opacity: 1;
     }
     li:last-child { border-bottom: none; }
+    .copy-btn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background-color: #00adb5;
+      color: white;
+      border: none;
+      border-radius: 3px;
+      padding: 4px 8px;
+      font-size: 0.7em;
+      cursor: pointer;
+      opacity: 0;
+      transition: opacity 0.2s ease, background-color 0.2s ease;
+      z-index: 10;
+    }
+    .copy-btn:hover {
+      background-color: #007a85;
+    }
+    .copy-btn:active {
+      background-color: #005a61;
+    }
     #shortcuts {
       position: fixed;
       top: 10px;
@@ -189,7 +246,7 @@
       <li><strong>Ctrl + e</strong> - Export msg</li>
       <li><strong>/search</strong> - Inline search</li>
       <li><strong>Up/Down</strong> - Scroll</li>
-      <li><strong>Ctrl + c</strong> - Copy last</li>
+      <!-- <li><strong>Ctrl + c</strong> - Copy last</li> -->
     </ul>
   </div>
 
@@ -397,30 +454,30 @@
       document.addEventListener("keydown", e => {
 
           // ─── Copy Last Message (must be first) ───
-          if (e.ctrlKey && e.key.toLowerCase() === "c") {
-            e.preventDefault();
+          // if (e.ctrlKey && e.key.toLowerCase() === "c") {
+          //   e.preventDefault();
 
-            const lastLi = messages.lastElementChild;
-            if (lastLi) {
-              let text = lastLi.textContent;
-              const prefix = username + ":";
-              if (text.startsWith(prefix)) {
-                text = text.slice(prefix.length).trim();
-              }
+          //   const lastLi = messages.lastElementChild;
+          //   if (lastLi) {
+          //     let text = lastLi.textContent;
+          //     const prefix = username + ":";
+          //     if (text.startsWith(prefix)) {
+          //       text = text.slice(prefix.length).trim();
+          //     }
 
-              // Try Clipboard API
-              if (navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard
-                  .writeText(text)
-                  .catch(() => fallbackCopy(text));
-              } else {
-                // Fallback path
-                fallbackCopy(text);
-              }
-            }
-            input.focus();
-            return; // don’t run any other shortcuts
-          }
+          //     // Try Clipboard API
+          //     if (navigator.clipboard && navigator.clipboard.writeText) {
+          //       navigator.clipboard
+          //         .writeText(text)
+          //         .catch(() => fallbackCopy(text));
+          //     } else {
+          //       // Fallback path
+          //       fallbackCopy(text);
+          //     }
+          //   }
+          //   input.focus();
+          //   return; // don’t run any other shortcuts
+          // }
 
 
         if (e.ctrlKey && e.key==="h") { e.preventDefault(); historyBtn.click(); }
@@ -476,24 +533,39 @@
         let inner=null;
         try { inner = JSON.parse(entry.msg); } catch{}
         const li = document.createElement("li");
+        
+        // Add copy button to each message
+        const copyBtn = document.createElement("button");
+        copyBtn.className = "copy-btn";
+        copyBtn.innerHTML = "📋";
+        copyBtn.title = "Copy message";
+        copyBtn.onclick = () => copyToClipboard(copyBtn);
+        li.appendChild(copyBtn);
+        
+        // Add message content wrapper
+        const messageContent = document.createElement("span");
+        messageContent.className = "message-content";
+        
         if (inner?.isFile) {
           const url=inner.msg, name=inner.name;
           const ext=url.split(".").pop().toLowerCase();
           if (["png","jpg","jpeg","gif"].includes(ext)) {
             const img=document.createElement("img");
             img.src=url; img.style.maxWidth="300px"; img.style.display="block";
-            li.appendChild(img);
+            messageContent.appendChild(img);
             const cap=document.createElement("div");
             cap.textContent=name; cap.style.color="#aaa"; cap.style.fontSize="0.8em";
-            cap.style.marginTop="4px"; li.appendChild(cap);
+            cap.style.marginTop="4px"; messageContent.appendChild(cap);
           } else {
             const a=document.createElement("a");
             a.href=url; a.textContent=name; a.download=name; a.style.color="#00adb5";
-            li.appendChild(a);
+            messageContent.appendChild(a);
           }
         } else {
-          li.textContent=entry.msg;
+          messageContent.textContent=entry.msg;
         }
+        
+        li.appendChild(messageContent);
         messages.appendChild(li);
       }
 
@@ -581,6 +653,58 @@
         }
       });
     });
+
+    // Copy to clipboard function
+    function copyToClipboard(button) {
+      const li = button.parentElement;
+      const messageContent = li.querySelector('.message-content');
+      
+      let textToCopy = '';
+      if (messageContent) {
+        // For file messages, copy the file name or URL
+        const link = messageContent.querySelector('a');
+        const img = messageContent.querySelector('img');
+        if (link) {
+          textToCopy = link.textContent;
+        } else if (img) {
+          textToCopy = img.nextSibling ? img.nextSibling.textContent : img.src;
+        } else {
+          textToCopy = messageContent.textContent;
+        }
+      } else {
+        textToCopy = li.textContent;
+      }
+      
+      // Remove username from the message (everything before the first colon)
+      if (textToCopy.includes(':')) {
+        const colonIndex = textToCopy.indexOf(':');
+        textToCopy = textToCopy.substring(colonIndex + 1).trim();
+      }
+      
+      // Try modern clipboard API first
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(textToCopy).then(() => {
+          showCopyFeedback(button);
+        }).catch(() => {
+          fallbackCopy(textToCopy);
+          showCopyFeedback(button);
+        });
+      } else {
+        fallbackCopy(textToCopy);
+        showCopyFeedback(button);
+      }
+    }
+
+    // Show copy feedback
+    function showCopyFeedback(button) {
+      const originalText = button.innerHTML;
+      button.innerHTML = "✓";
+      button.style.backgroundColor = "#28a745";
+      setTimeout(() => {
+        button.innerHTML = originalText;
+        button.style.backgroundColor = "#00adb5";
+      }, 1000);
+    }
 
     // Paste this before your document.addEventListener("keydown", ...)
     function fallbackCopy(text) {

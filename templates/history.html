@@ -5,6 +5,35 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Chat History</title>
   <style>
+      /* ——— MOBILE RESPONSIVE OVERRIDES ——— */
+      @media only screen and (max-width: 600px) {
+      body {
+        justify-content: flex-start;
+        padding: 10px;
+      }
+      textarea#message {
+        width: 90%!important;
+      }
+      ul {
+        width: 90%!important;
+        max-height: 60vh;
+      }
+      #quickActions,
+      #controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        justify-content: center;
+      }
+      button,
+      .action-btn {
+        padding: 10px 14px;
+        font-size: 0.9em;
+      }
+      #shortcuts {
+        display: none; /* hide on mobile for space */
+      }
+    }
     body {
       font-family: Arial, sans-serif;
       background-color: #1a1a2e;
@@ -15,15 +44,16 @@
       justify-content: center;
       height: 100vh;
       margin: 0;
+      position: relative;
     }
-    h1 {
-      color: #00adb5;
+    h1 { 
+      color: #00adb5; 
     }
     ul {
       list-style-type: none;
       padding: 0;
       width: 1000px;
-      max-height: 250px;
+      max-height: 70vh;
       overflow-y: auto;
       border: 1px solid #00adb5;
       border-radius: 5px;
@@ -33,13 +63,47 @@
     li {
       padding: 10px;
       border-bottom: 1px solid #1a1a2e;
+      white-space: pre-wrap;
+      position: relative;
+    }
+    li:hover {
+      background-color: rgba(0, 173, 181, 0.1);
+    }
+    li:hover .copy-btn {
+      opacity: 1;
     }
     li:last-child {
       border-bottom: none;
     }
-    small {
-      color: #aaa;
+    .timestamp {
+      color: #00adb5;
       font-size: 0.8em;
+      float: right;
+      opacity: 0.8;
+    }
+    .copy-btn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background-color: #00adb5;
+      color: white;
+      border: none;
+      border-radius: 3px;
+      padding: 4px 8px;
+      font-size: 0.7em;
+      cursor: pointer;
+      opacity: 0;
+      transition: opacity 0.2s ease, background-color 0.2s ease;
+      z-index: 10;
+    }
+    .copy-btn:hover {
+      background-color: #007a85;
+    }
+    .copy-btn:active {
+      background-color: #005a61;
+    }
+    li:last-child {
+      border-bottom: none;
     }
     button {
       padding: 12px 20px;
@@ -52,14 +116,13 @@
       font-weight: bold;
       transition: 0.3s;
     }
-    button:hover {
-      background-color: #007a85;
+    button:hover { 
+      background-color: #007a85; 
     }
-        /* Updated Shortcuts Panel - Top Right, shifted left */
     #shortcuts {
       position: fixed;
       top: 10px;
-      right: 200px;  /* Increased value moves it leftwards */
+      right: 200px;
       background-color: rgba(0, 173, 181, 0.1);
       padding: 5px 8px;
       border-radius: 5px;
@@ -113,6 +176,58 @@
         }
       });
     });
+
+    // Copy to clipboard function
+    function copyToClipboard(button) {
+      const li = button.parentElement;
+      const messageContent = li.querySelector('.message-content').textContent;
+      
+      // Remove username from the message (everything before the first colon)
+      let textToCopy = messageContent;
+      if (messageContent.includes(':')) {
+        const colonIndex = messageContent.indexOf(':');
+        textToCopy = messageContent.substring(colonIndex + 1).trim();
+      }
+      
+      // Try modern clipboard API first
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(textToCopy).then(() => {
+          showCopyFeedback(button);
+        }).catch(() => {
+          fallbackCopy(textToCopy, button);
+        });
+      } else {
+        fallbackCopy(textToCopy, button);
+      }
+    }
+
+    // Fallback copy method for older browsers
+    function fallbackCopy(text, button) {
+      const tmp = document.createElement("textarea");
+      tmp.style.position = "fixed";
+      tmp.style.opacity = "0";
+      tmp.value = text;
+      document.body.appendChild(tmp);
+      tmp.select();
+      try {
+        document.execCommand("copy");
+        showCopyFeedback(button);
+      } catch (err) {
+        console.error("Copy failed:", err);
+      }
+      document.body.removeChild(tmp);
+    }
+
+    // Show copy feedback
+    function showCopyFeedback(button) {
+      const originalText = button.textContent;
+      button.textContent = "✓";
+      button.style.backgroundColor = "#28a745";
+      setTimeout(() => {
+        button.textContent = originalText;
+        button.style.backgroundColor = "#00adb5";
+      }, 1000);
+    }
   </script>
 </head>
 <body>
@@ -120,8 +235,9 @@
   <ul id="historyList">
     {% for entry in chat_history %}
       <li>
-        {{ entry.msg }}<br>
-        <small>{{ entry.timestamp[:19].replace("T", " ") }}</small>
+        <button class="copy-btn" onclick="copyToClipboard(this)" title="Copy message">📋</button>
+        <span class="timestamp">{{ entry.timestamp[:19].replace("T", " ") }}</span>
+        <span class="message-content">{{ entry.msg }}</span>
       </li>
     {% endfor %}
   </ul>
