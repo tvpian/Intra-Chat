@@ -9,7 +9,7 @@
 ## 🎯 ALL FUNCTIONS RESTORED:
 
 ### 🔐 Authentication System
-- ✅ Login with password: `mbwh2k24`
+- ✅ Login with configured password (see .env.template)
 - ✅ Session management with IP whitelisting  
 - ✅ Logout functionality
 - ✅ Attempt throttling and lockout protection
@@ -105,7 +105,7 @@ sudo systemctl restart intra_chat.service
 ```
 
 ## 🧪 FINAL TEST CHECKLIST:
-1. ✅ Login with `mbwh2k24`
+1. ✅ Login with your configured password (from .env file)
 2. Send a regular chat message
 3. Try `/search test` command
 4. Try `/docs` command
