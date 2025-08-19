@@ -88,7 +88,6 @@
       padding: 10px;
       border-bottom: 1px solid #1a1a2e;
       white-space: pre-wrap;
-      position: relative;
     }
     li:hover {
       background-color: rgba(0, 173, 181, 0.1);
@@ -98,9 +97,9 @@
     }
     li:last-child { border-bottom: none; }
     .copy-btn {
-      position: absolute;
-      top: 8px;
-      right: 8px;
+      display: block;
+      width: 60px;
+      margin: 8px auto 0 auto;
       background-color: #00adb5;
       color: white;
       border: none;
@@ -110,7 +109,7 @@
       cursor: pointer;
       opacity: 0;
       transition: opacity 0.2s ease, background-color 0.2s ease;
-      z-index: 10;
+      text-align: center;
     }
     .copy-btn:hover {
       background-color: #007a85;
@@ -164,6 +163,14 @@
       margin-top: 0;
       color: #00adb5;
     }
+    .modal-box ul {
+      text-align: left;
+      padding-left: 20px;
+    }
+    .modal-box li {
+      margin: 8px 0;
+      line-height: 1.4;
+    }
     .modal-box input[type="text"],
     .modal-box input[type="file"] {
       width: 100%;
@@ -208,6 +215,12 @@
     .action-btn:hover {
       background: #007a85;
     }
+    .logout-btn {
+      background: #dc3545 !important;
+    }
+    .logout-btn:hover {
+      background: #c82333 !important;
+    }
   </style>
 </head>
 <body>
@@ -217,11 +230,12 @@
   <textarea id="message" placeholder="Type a message & hit Enter" rows="3" autofocus></textarea>
 
   <!-- Quick action buttons -->
-  <div id="quickActions">
+    <div id="quickActions">
     <button class="action-btn" data-cmd="/search ">🔍 Search</button>
+    <button class="action-btn" data-cmd="/docs ">📚 Docs</button>
     <button class="action-btn" data-cmd="/alert ">🚨 Alert</button>
     <button class="action-btn" data-cmd="/summarize ">📝 Summarize</button>
-    <button id="uploadBtn">UPLOAD</button>
+    <button id="uploadBtn">📁 Upload</button>
   </div>
 
   <!-- Hidden file input -->
@@ -244,7 +258,9 @@
       <li><strong>Ctrl + m</strong> - Tech Manual</li>
       <li><strong>Ctrl + u</strong> - Change Username</li>
       <li><strong>Ctrl + e</strong> - Export msg</li>
-      <li><strong>/search</strong> - Inline search</li>
+      <li><strong>Ctrl + l</strong> - Logout</li>
+      <li><strong>/search</strong> - Search manual</li>
+      <li><strong>/docs</strong> - Team docs</li>
       <li><strong>Up/Down</strong> - Scroll</li>
       <!-- <li><strong>Ctrl + c</strong> - Copy last</li> -->
     </ul>
@@ -277,16 +293,24 @@
   <!-- "What's New" modal -->
   <div id="updateModal" class="modal-overlay" style="display:none;">
     <div class="modal-box">
-      <h3 id="updateTitle">What's New in MBWH Intra-Chat</h3>
+      <h3 id="updateTitle">🚀 What's New in MBWH Intra-Chat</h3>
       <div id="updateContent">
-        <p>Version 1.0.1:</p>
+        <p><strong>Version 1.7.0 - Patch Update!</strong></p>
         <ul>
-          <li>Tech Manual export functionality added</li>
-          <li>Agentic AI commands integrated</li>
-          <li>Custom modals for username and export input</li>
-          <li>Enhanced keyboard shortcuts</li>
-          <li>File & image sharing</li>
+          <li>📚 <strong>Team Documentation Integration</strong> - Access your team docs directly in chat</li>
+          <li>📋 <strong>Smart Copy Buttons</strong> - One-click copy for every message</li>
+          <li>📁 <strong>Category-based File Uploads</strong> - Organized file storage by type</li>
+          <li>🏢 <strong>Team Workspace Integration</strong> - Seamless file sharing</li>
+          <li>🎨 <strong>Improved Visual Design</strong> - Consistent styling across pages</li>
+          <li>⏰ <strong>Message Timestamps</strong> - Track when messages were sent</li>
+          <li>🔍 <strong>Enhanced History View</strong> - Better message organization</li>
+          <li>📱 <strong>Mobile Responsive Design</strong> - Works great on all devices</li>
+          <li>🎯 <strong>Username Stripping</strong> - Clean copy without usernames</li>
+          <li>💾 <strong>Debug & Logging</strong> - Better troubleshooting tools</li>
         </ul>
+        <p style="margin-top: 15px; font-size: 0.9em; color: #00adb5;">
+          <strong>New:</strong> Use <code>/docs</code> command or 📚 button to access team documentation!
+        </p>
       </div>
       <div class="modal-buttons">
         <button id="updateOkBtn">Got It!</button>
@@ -325,13 +349,42 @@
         localStorage.setItem("chatUsername", username);
       }
 
+      // --- Release Notes Popup ---
+      const currentVersion = "1.7.0";
+      const lastSeenVersion = localStorage.getItem("lastSeenVersion");
+      const updateModal = document.getElementById("updateModal");
+      const updateOkBtn = document.getElementById("updateOkBtn");
+      
+      // Show release notes if first time or new version
+      if (!lastSeenVersion || lastSeenVersion !== currentVersion) {
+        setTimeout(() => {
+          updateModal.style.display = "flex";
+        }, 1000); // Show after 1 second delay
+      }
+      
+      // Handle release notes dismiss
+      updateOkBtn.addEventListener("click", () => {
+        updateModal.style.display = "none";
+        localStorage.setItem("lastSeenVersion", currentVersion);
+        input.focus();
+      });
+      
+      // Close on background click
+      updateModal.addEventListener("click", (e) => {
+        if (e.target === updateModal) {
+          updateModal.style.display = "none";
+          localStorage.setItem("lastSeenVersion", currentVersion);
+          input.focus();
+        }
+      });
+
       // --- Unlock Audio on First Click ---
       document.body.addEventListener("click", () => {
         alertSound.play().then(() => alertSound.pause()).catch(()=>{});
       }, { once: true });
 
       // --- Quick Actions ---
-      document.querySelectorAll('.action-btn').forEach(btn => {
+      document.querySelectorAll('.action-btn:not(.logout-btn)').forEach(btn => {
         btn.addEventListener('click', () => {
           input.value = btn.dataset.cmd;
           input.focus();
@@ -340,7 +393,9 @@
       });
 
       // --- Upload Modal Wiring ---
-      uploadBtn.addEventListener("click", () => uploadModal.style.display = "flex");
+      if (uploadBtn) {
+        uploadBtn.addEventListener("click", () => uploadModal.style.display = "flex");
+      }
       uploadCancel.addEventListener("click", () => {
         uploadModal.style.display = "none";
         fileModalInput.value     = "";
@@ -408,6 +463,19 @@
           const m = raw.match(/^\/search\s+(?:"([^"]+)"|(.+))$/i);
           const term = m ? (m[1]||m[2]).trim() : "";
           if (term) window.location.href = "/manual?q=" + encodeURIComponent(term);
+        }
+        else if (l.startsWith("/docs")) {
+          console.log("Docs command detected:", raw);
+          const m = raw.match(/^\/docs\s*(.*)$/i);
+          const term = m ? m[1].trim() : "";
+          console.log("Extracted term:", term);
+          if (term) {
+            console.log("Redirecting to docs page with search term");
+            window.location.href = "/docs?search=" + encodeURIComponent(term);
+          } else {
+            console.log("Redirecting to docs page");
+            window.location.href = "/docs";
+          }
         }
         else if (l.startsWith("/alert")) {
           const msg = raw.slice(6).trim();
@@ -482,6 +550,12 @@
 
         if (e.ctrlKey && e.key==="h") { e.preventDefault(); historyBtn.click(); }
         if (e.ctrlKey && e.key==="m") { e.preventDefault(); manualBtn.click(); }
+        if (e.ctrlKey && e.key==="l") { 
+          e.preventDefault(); 
+          if (confirm("Are you sure you want to logout?")) {
+            window.location.href = "/logout";
+          }
+        }
         if (e.ctrlKey && e.key==="u") {
           e.preventDefault();
           showModal("Enter new username", username)
@@ -534,14 +608,6 @@
         try { inner = JSON.parse(entry.msg); } catch{}
         const li = document.createElement("li");
         
-        // Add copy button to each message
-        const copyBtn = document.createElement("button");
-        copyBtn.className = "copy-btn";
-        copyBtn.innerHTML = "📋";
-        copyBtn.title = "Copy message";
-        copyBtn.onclick = () => copyToClipboard(copyBtn);
-        li.appendChild(copyBtn);
-        
         // Add message content wrapper
         const messageContent = document.createElement("span");
         messageContent.className = "message-content";
@@ -566,6 +632,15 @@
         }
         
         li.appendChild(messageContent);
+        
+        // Add copy button at the bottom
+        const copyBtn = document.createElement("button");
+        copyBtn.className = "copy-btn";
+        copyBtn.innerHTML = "📋";
+        copyBtn.title = "Copy message";
+        copyBtn.onclick = () => copyToClipboard(copyBtn);
+        li.appendChild(copyBtn);
+        
         messages.appendChild(li);
       }
 

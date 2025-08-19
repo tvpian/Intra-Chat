@@ -1,0 +1,40 @@
+# Sensitive configuration files
+.env
+*.service
+!*.service.template
+
+# Python files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+
+# Logs and debugging files
+*.log
+auth_debug.log
+upload_debug.log
+
+# Chat data
+chat_history.json
+tech_manual.json
+
+# Development files
+.vscode/
+.idea/
+
+# Upload directories
+uploads/
+/media/
+
+# Backup files
+*.bak
+*.orig
+*~
+
+# OS files
+.DS_Store
+Thumbs.db

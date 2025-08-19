@@ -1,0 +1,14 @@
+[Unit]
+Description=Flask Chat Application
+After=network.target
+
+[Service]
+User=YOUR_USERNAME
+WorkingDirectory=/path/to/your/chat/app
+Environment=APP_PASSWORD=your_secure_password_here
+Environment=SECRET_KEY=your_secret_key_here
+ExecStart=/path/to/python3 /path/to/your/chat/app/app.py
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

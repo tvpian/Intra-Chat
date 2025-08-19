@@ -64,7 +64,6 @@
       padding: 10px;
       border-bottom: 1px solid #1a1a2e;
       white-space: pre-wrap;
-      position: relative;
     }
     li:hover {
       background-color: rgba(0, 173, 181, 0.1);
@@ -82,9 +81,9 @@
       opacity: 0.8;
     }
     .copy-btn {
-      position: absolute;
-      top: 8px;
-      right: 8px;
+      display: block;
+      width: 60px;
+      margin: 8px auto 0 auto;
       background-color: #00adb5;
       color: white;
       border: none;
@@ -94,7 +93,7 @@
       cursor: pointer;
       opacity: 0;
       transition: opacity 0.2s ease, background-color 0.2s ease;
-      z-index: 10;
+      text-align: center;
     }
     .copy-btn:hover {
       background-color: #007a85;
@@ -235,9 +234,9 @@
   <ul id="historyList">
     {% for entry in chat_history %}
       <li>
-        <button class="copy-btn" onclick="copyToClipboard(this)" title="Copy message">📋</button>
         <span class="timestamp">{{ entry.timestamp[:19].replace("T", " ") }}</span>
         <span class="message-content">{{ entry.msg }}</span>
+        <button class="copy-btn" onclick="copyToClipboard(this)" title="Copy message">📋</button>
       </li>
     {% endfor %}
   </ul>

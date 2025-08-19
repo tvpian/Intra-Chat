@@ -1,6 +1,7 @@
 Flask
 Flask-SocketIO
 Flask-Cors
+python-dotenv
 eventlet
 gunicornaiofiles @ file:///work/perseverance-python-buildout/croot/aiofiles_1698866578009/work
 aiohappyeyeballs==2.4.3
