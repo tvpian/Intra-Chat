@@ -4,40 +4,17 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Chat History</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
   <style>
-      /* ——— MOBILE RESPONSIVE OVERRIDES ——— */
-      @media only screen and (max-width: 600px) {
-      body {
-        justify-content: flex-start;
-        padding: 10px;
-      }
-      textarea#message {
-        width: 90%!important;
-      }
-      ul {
-        width: 90%!important;
-        max-height: 60vh;
-      }
-      #quickActions,
-      #controls {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 6px;
-        justify-content: center;
-      }
-      button,
-      .action-btn {
-        padding: 10px 14px;
-        font-size: 0.9em;
-      }
-      #shortcuts {
-        display: none; /* hide on mobile for space */
-      }
-    }
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: Arial, sans-serif;
-      background-color: #1a1a2e;
-      color: #e0e0e0;
+      font-family: 'Inter', 'Segoe UI', sans-serif;
+      background: #111827;
+      background-image:
+        radial-gradient(ellipse at 20% 50%, rgba(0,200,210,0.12) 0%, transparent 60%),
+        radial-gradient(ellipse at 80% 20%, rgba(20,70,130,0.22) 0%, transparent 50%);
+      color: #f1f5f9;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -46,36 +23,44 @@
       margin: 0;
       position: relative;
     }
-    h1 { 
-      color: #00adb5; 
+    h1 {
+      color: #22f5ff;
+      font-size: 1.6em;
+      font-weight: 700;
+      margin-bottom: 12px;
+      text-shadow: 0 0 24px rgba(34,245,255,0.35);
     }
     ul {
       list-style-type: none;
       padding: 0;
-      width: 1000px;
+      width: 900px;
+      max-width: 90vw;
       max-height: 70vh;
       overflow-y: auto;
-      border: 1px solid #00adb5;
-      border-radius: 5px;
-      background-color: #0f3460;
-      box-shadow: 0 4px 8px rgba(0, 173, 181, 0.3);
+      border: 1px solid rgba(34,245,255,0.3);
+      border-radius: 12px;
+      background: rgba(20,28,45,0.9);
+      backdrop-filter: blur(8px);
+      box-shadow: 0 4px 24px rgba(0,0,0,0.3);
     }
+    ul::-webkit-scrollbar { width: 5px; }
+    ul::-webkit-scrollbar-track { background: transparent; }
+    ul::-webkit-scrollbar-thumb { background: rgba(0,200,210,0.35); border-radius: 3px; }
+    ul::-webkit-scrollbar-thumb:hover { background: rgba(0,200,210,0.55); }
     li {
-      padding: 10px;
-      border-bottom: 1px solid #1a1a2e;
+      padding: 10px 14px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
       white-space: pre-wrap;
+      font-size: 0.9em;
+      line-height: 1.55;
+      position: relative;
+      transition: background 0.15s;
     }
-    li:hover {
-      background-color: rgba(0, 173, 181, 0.1);
-    }
-    li:hover .copy-btn {
-      opacity: 1;
-    }
-    li:last-child {
-      border-bottom: none;
-    }
+    li:hover { background: rgba(0,200,210,0.12); }
+    li:hover .copy-btn { opacity: 1; }
+    li:last-child { border-bottom: none; }
     .timestamp {
-      color: #00adb5;
+      color: #22f5ff;
       font-size: 0.8em;
       float: right;
       opacity: 0.8;
@@ -84,10 +69,10 @@
       display: block;
       width: 60px;
       margin: 8px auto 0 auto;
-      background-color: #00adb5;
+      background: rgba(0,200,210,0.8);
       color: white;
       border: none;
-      border-radius: 3px;
+      border-radius: 6px;
       padding: 4px 8px;
       font-size: 0.7em;
       cursor: pointer;
@@ -95,53 +80,59 @@
       transition: opacity 0.2s ease, background-color 0.2s ease;
       text-align: center;
     }
-    .copy-btn:hover {
-      background-color: #007a85;
-    }
-    .copy-btn:active {
-      background-color: #005a61;
-    }
-    li:last-child {
-      border-bottom: none;
-    }
+    .copy-btn:hover { background: #00c8d2; }
     button {
-      padding: 12px 20px;
-      background-color: #00adb5;
+      padding: 10px 18px;
+      background: linear-gradient(135deg, #00c8d2 0%, #00a0a8 100%);
       color: white;
       border: none;
-      border-radius: 5px;
+      border-radius: 8px;
       cursor: pointer;
-      margin: 5px;
-      font-weight: bold;
-      transition: 0.3s;
+      margin: 12px 4px;
+      font-weight: 600;
+      font-size: 0.85em;
+      font-family: 'Inter', sans-serif;
+      transition: all 0.2s ease;
     }
-    button:hover { 
-      background-color: #007a85; 
+    button:hover {
+      background: linear-gradient(135deg, #00dce6 0%, #00b5be 100%);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 16px rgba(0,200,210,0.35);
     }
     #shortcuts {
       position: fixed;
-      top: 10px;
-      right: 200px;
-      background-color: rgba(0, 173, 181, 0.1);
-      padding: 5px 8px;
-      border-radius: 5px;
-      width: 50px;
-      font-size: 0.75em;
-      color: #e0e0e0;
+      top: 16px;
+      left: 16px;
+      background: rgba(26,34,53,0.92);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(34,245,255,0.3);
+      padding: 12px 16px;
+      border-radius: 12px;
+      width: 180px;
+      font-size: 0.7em;
+      color: #a0b4c8;
       z-index: 1000;
     }
     #shortcuts h2 {
-      margin: 0 0 5px 0;
-      color: #00adb5;
+      margin: 0 0 8px 0;
+      color: #22f5ff;
       font-size: 0.9em;
+      font-weight: 600;
+      text-transform: uppercase;
     }
     #shortcuts ul {
-      list-style: none;
-      margin: 0;
-      padding: 0;
+      list-style: none; margin: 0; padding: 0;
+      border: none; background: none; backdrop-filter: none;
+      box-shadow: none; width: auto; max-height: none; overflow-y: visible;
     }
-    #shortcuts li {
-      margin: 2px 0;
+    #shortcuts li { margin: 3px 0; line-height: 1.4; padding: 0; border: none; }
+    #shortcuts li:hover { background: none; }
+    #shortcuts li strong { color: #c0d0e0; font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.95em; }
+    @media only screen and (max-width: 600px) {
+      body { justify-content: flex-start; padding: 10px; }
+      ul { width: 95% !important; max-height: 60vh; }
+      #shortcuts { display: none; }
+      button { padding: 10px 14px; font-size: 0.9em; }
     }
   </style>
   <script>
@@ -151,6 +142,41 @@
       if(historyList) {
         historyList.scrollTop = historyList.scrollHeight;
       }
+
+      // Parse file messages (stored as JSON) and render them properly
+      document.querySelectorAll('.message-content').forEach(span => {
+        const text = span.textContent.trim();
+        try {
+          const data = JSON.parse(text);
+          if (data && data.isFile) {
+            span.innerHTML = '';
+            const ext = data.msg.split('.').pop().toLowerCase();
+            if (['png','jpg','jpeg','gif'].includes(ext)) {
+              const img = document.createElement('img');
+              img.src = data.msg;
+              img.style.maxWidth = '300px';
+              img.style.display = 'block';
+              img.style.borderRadius = '8px';
+              span.appendChild(img);
+              const cap = document.createElement('div');
+              cap.textContent = data.name;
+              cap.style.color = '#94a3b8';
+              cap.style.fontSize = '0.8em';
+              cap.style.marginTop = '4px';
+              span.appendChild(cap);
+            } else {
+              const a = document.createElement('a');
+              a.href = data.msg;
+              a.textContent = '\u{1F4CE} ' + data.name;
+              a.download = data.name;
+              a.style.color = '#22f5ff';
+              span.appendChild(a);
+            }
+          }
+        } catch(e) {
+          // Not JSON — regular text message, leave as-is
+        }
+      });
 
       // Listen for Backspace, ArrowUp, and ArrowDown keys.
       document.addEventListener("keydown", function(event) {
@@ -224,7 +250,7 @@
       button.style.backgroundColor = "#28a745";
       setTimeout(() => {
         button.textContent = originalText;
-        button.style.backgroundColor = "#00adb5";
+        button.style.backgroundColor = "#00c8d2";
       }, 1000);
     }
   </script>

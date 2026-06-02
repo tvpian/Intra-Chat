@@ -1,9 +1,9 @@
-# Sensitive configuration files
+# Secrets & local config
 .env
 *.service
 !*.service.template
 
-# Python files
+# Python
 __pycache__/
 *.pyc
 *.pyo
@@ -13,28 +13,24 @@ env/
 venv/
 .venv/
 
-# Logs and debugging files
+# Logs
 *.log
-auth_debug.log
-upload_debug.log
 
-# Chat data
+# Runtime data (don't commit user content)
 chat_history.json
 tech_manual.json
+braindump.json
+notifications.json
 
-# Development files
+# Uploads (everything except the placeholder)
+uploads/*
+!uploads/.gitkeep
+
+# Editor / OS
 .vscode/
 .idea/
-
-# Upload directories
-uploads/
-/media/
-
-# Backup files
+.DS_Store
+Thumbs.db
 *.bak
 *.orig
 *~
-
-# OS files
-.DS_Store
-Thumbs.db

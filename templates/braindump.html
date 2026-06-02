@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Brain Dump – Team Knowledge Board</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', 'Segoe UI', sans-serif;
+      background: #111827;
+      background-image:
+        radial-gradient(ellipse at 20% 50%, rgba(0,200,210,0.12) 0%, transparent 60%),
+        radial-gradient(ellipse at 80% 20%, rgba(20,70,130,0.22) 0%, transparent 50%);
+      color: #f1f5f9;
+      min-height: 100vh;
+    }
+
+    /* ── Header ─────────────────────────────── */
+    .header {
+      background: rgba(26,34,53,0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(34,245,255,0.2);
+      padding: 15px 25px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .header h1 { color: #22f5ff; font-size: 1.3em; font-weight: 700; text-shadow: 0 0 20px rgba(34,245,255,0.25); }
+    .header h1 i { margin-right: 8px; }
+    .back-link { color: #22f5ff; text-decoration: none; font-size: 0.9em; font-weight: 500; }
+    .back-link:hover { text-decoration: underline; }
+
+    /* ── Toolbar ────────────────────────────── */
+    .toolbar {
+      padding: 12px 25px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      background: rgba(26,34,53,0.6);
+      border-bottom: 1px solid rgba(34,245,255,0.1);
+    }
+    .toolbar input, .toolbar select {
+      padding: 9px 14px;
+      background: rgba(20,28,45,0.9);
+      border: 1px solid rgba(34,245,255,0.3);
+      border-radius: 8px;
+      color: #f8fafc;
+      font-size: 0.9em;
+      font-family: 'Inter', sans-serif;
+      transition: border-color 0.2s;
+    }
+    .toolbar input:focus, .toolbar select:focus { outline: none; border-color: rgba(34,245,255,0.6); }
+    .toolbar input::placeholder { color: #94a3b8; }
+    .btn {
+      padding: 9px 18px;
+      background: linear-gradient(135deg, #00c8d2 0%, #00a0a8 100%);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.9em;
+      font-family: 'Inter', sans-serif;
+      transition: all 0.2s;
+    }
+    .btn:hover {
+      background: linear-gradient(135deg, #00dce6 0%, #00b5be 100%);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 16px rgba(0,200,210,0.35);
+    }
+    .btn-outline {
+      background: transparent;
+      border: 1px solid rgba(34,245,255,0.4);
+      color: #22f5ff;
+    }
+    .btn-outline:hover { background: rgba(0,200,210,0.15); transform: translateY(-1px); box-shadow: none; }
+
+    /* ── New entry form ────────────────────── */
+    .new-entry {
+      max-width: 800px;
+      margin: 20px auto;
+      padding: 0 25px;
+      display: none;
+    }
+    .new-entry.open { display: block; }
+    .form-card {
+      background: rgba(26,34,53,0.9);
+      border: 1px solid rgba(34,245,255,0.2);
+      border-radius: 12px;
+      padding: 20px;
+      backdrop-filter: blur(8px);
+    }
+    .form-card h2 { color: #22f5ff; font-size: 1em; margin-bottom: 12px; font-weight: 600; }
+    .form-row { margin-bottom: 12px; }
+    .form-row label { display: block; font-size: 0.8em; color: #94a3b8; margin-bottom: 4px; font-weight: 500; }
+    .form-row input, .form-row textarea {
+      width: 100%;
+      padding: 10px 14px;
+      background: rgba(20,28,45,0.9);
+      border: 1px solid rgba(34,245,255,0.2);
+      border-radius: 8px;
+      color: #f8fafc;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.95em;
+      transition: border-color 0.2s;
+    }
+    .form-row input:focus, .form-row textarea:focus { outline: none; border-color: rgba(34,245,255,0.5); }
+    .form-row textarea { resize: vertical; min-height: 120px; font-family: 'SF Mono', 'Fira Code', monospace; }
+    .form-actions { display: flex; gap: 8px; justify-content: flex-end; }
+    .hint { font-size: 0.75em; color: #8899aa; margin-top: 3px; }
+
+    /* ── Entries ────────────────────────────── */
+    .entries { max-width: 800px; margin: 20px auto; padding: 0 25px; }
+    .entry-card {
+      background: rgba(26,34,53,0.9);
+      border: 1px solid rgba(34,245,255,0.15);
+      border-radius: 12px;
+      padding: 18px;
+      margin-bottom: 12px;
+      transition: 0.2s;
+      position: relative;
+      backdrop-filter: blur(8px);
+    }
+    .entry-card:hover { border-color: rgba(34,245,255,0.35); }
+    .entry-card.pinned { border-left: 3px solid #ffc107; }
+    .entry-title { color: #22f5ff; font-size: 1.1em; font-weight: 600; margin-bottom: 6px; }
+    .entry-meta { font-size: 0.78em; color: #8899aa; margin-bottom: 10px; }
+    .entry-meta span { margin-right: 12px; }
+    .entry-content {
+      font-size: 0.92em;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      word-break: break-word;
+      color: #e2e8f0;
+    }
+    .entry-content code {
+      background: rgba(0,200,210,0.1);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.9em;
+      color: #22f5ff;
+    }
+    .entry-content pre {
+      background: #0d1120;
+      padding: 12px;
+      border-radius: 8px;
+      overflow-x: auto;
+      margin: 8px 0;
+      font-size: 0.88em;
+      color: #e2e8f0;
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+    .entry-tags { margin-top: 10px; display: flex; gap: 6px; flex-wrap: wrap; }
+    .tag {
+      background: rgba(0,200,210,0.15);
+      color: #22f5ff;
+      padding: 2px 10px;
+      border-radius: 12px;
+      font-size: 0.78em;
+      cursor: pointer;
+      font-weight: 500;
+      transition: 0.2s;
+    }
+    .tag:hover { background: rgba(0,200,210,0.3); }
+    .entry-actions {
+      position: absolute;
+      top: 12px;
+      right: 14px;
+      display: flex;
+      gap: 6px;
+      opacity: 0;
+      transition: 0.2s;
+    }
+    .entry-card:hover .entry-actions { opacity: 1; }
+    .entry-actions button {
+      background: none;
+      border: none;
+      color: #8899aa;
+      cursor: pointer;
+      font-size: 0.85em;
+      padding: 4px;
+      transition: 0.2s;
+    }
+    .entry-actions button:hover { color: #22f5ff; }
+    .pin-icon { color: #ffc107 !important; }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #8899aa;
+    }
+    .empty-state i { font-size: 3em; margin-bottom: 15px; color: #4a5568; }
+    .empty-state p { font-size: 1em; }
+
+    /* ── Reactions ──────────────────────────── */
+    .reactions { display: flex; gap: 4px; margin-top: 10px; align-items: center; }
+    .reaction-btn {
+      background: rgba(20,28,45,0.8);
+      border: 1px solid transparent;
+      border-radius: 14px;
+      padding: 2px 8px;
+      font-size: 0.82em;
+      cursor: pointer;
+      transition: 0.2s;
+      color: #b0c4d8;
+    }
+    .reaction-btn:hover { border-color: rgba(34,245,255,0.4); }
+    .reaction-btn.active { background: rgba(0,200,210,0.15); border-color: rgba(34,245,255,0.4); color: #fff; }
+    .reaction-count { font-size: 0.75em; margin-left: 2px; color: #94a3b8; }
+
+    /* ── Stats bar ─────────────────────────── */
+    .stats-bar {
+      max-width: 800px;
+      margin: 10px auto 0;
+      padding: 0 25px;
+      display: flex;
+      gap: 15px;
+      font-size: 0.8em;
+      color: #8899aa;
+    }
+    .stats-bar span i { margin-right: 4px; color: #22f5ff; }
+
+    /* ── Keyboard hint ─────────────────────── */
+    .kbd { background: rgba(20,28,45,0.8); padding: 1px 6px; border-radius: 4px; font-size: 0.8em; color: #a0b4c8; font-family: 'SF Mono', 'Fira Code', monospace; }
+
+    /* ── Edit modal ─────────────────────────── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.65);
+      backdrop-filter: blur(4px);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal-box {
+      background: #1a2235;
+      border: 1px solid rgba(34,245,255,0.25);
+      border-radius: 16px;
+      padding: 24px;
+      width: 90%;
+      max-width: 600px;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 0 16px 48px rgba(0,0,0,0.5);
+    }
+    .modal-box h2 { color: #22f5ff; margin-bottom: 12px; font-size: 1em; font-weight: 600; }
+
+    @media (max-width: 600px) {
+      .toolbar { padding: 10px 12px; }
+      .entries, .new-entry { padding: 0 12px; }
+      .header { padding: 12px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <h1><i class="fas fa-brain"></i> Brain Dump</h1>
+    <div>
+      <span style="font-size:0.75em;color:#555;margin-right:15px;"><span class="kbd">N</span> New &nbsp;<span class="kbd">/</span> Search &nbsp;<span class="kbd">Esc</span> Close</span>
+      <a href="/" class="back-link"><i class="fas fa-arrow-left"></i> Back to Chat</a>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <input type="text" id="searchInput" placeholder="Search entries..." style="flex:1;min-width:150px;" />
+    <select id="tagFilter"><option value="">All Tags</option></select>
+    <select id="authorFilter"><option value="">All Authors</option></select>
+    <button class="btn" onclick="toggleNewEntry()"><i class="fas fa-plus"></i> New Entry</button>
+    <button class="btn btn-outline" onclick="openExportModal()"><i class="fas fa-file-export"></i> Export</button>
+  </div>
+
+  <!-- New entry form -->
+  <div class="new-entry" id="newEntryForm">
+    <div class="form-card">
+      <h2><i class="fas fa-lightbulb"></i> Drop a thought</h2>
+      <div class="form-row">
+        <label>Your Name</label>
+        <input type="text" id="entryAuthor" placeholder="Who are you?" />
+      </div>
+      <div class="form-row">
+        <label>Title</label>
+        <input type="text" id="entryTitle" placeholder="Short summary (optional)" />
+      </div>
+      <div class="form-row">
+        <label>Content</label>
+        <textarea id="entryContent" placeholder="Dump your findings, ideas, code snippets, links...&#10;&#10;Markdown-style code blocks supported:&#10;```&#10;code here&#10;```"></textarea>
+      </div>
+      <div class="form-row">
+        <label>Tags</label>
+        <input type="text" id="entryTags" placeholder="ros, hardware, idea, bug (comma separated)" />
+        <div class="hint">Separate tags with commas</div>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-outline" onclick="toggleNewEntry()">Cancel</button>
+        <button class="btn" onclick="submitEntry()"><i class="fas fa-paper-plane"></i> Post</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-bar" id="statsBar"></div>
+
+  <!-- Entries list -->
+  <div class="entries" id="entriesList"></div>
+
+  <!-- Export modal -->
+  <div class="modal-overlay" id="exportModal">
+    <div class="modal-box">
+      <h2><i class="fas fa-file-export"></i> Export Brain Dump</h2>
+      <p style="font-size:0.85em;color:#94a3b8;margin-bottom:14px;">Clean Markdown — paste into Notion, Obsidian, Confluence, or any app.</p>
+      <textarea id="exportContent" readonly style="width:100%;min-height:250px;max-height:50vh;padding:12px;background:#0d1120;border:1px solid rgba(34,245,255,0.2);border-radius:8px;color:#e2e8f0;font-family:'SF Mono','Fira Code',monospace;font-size:0.85em;resize:vertical;"></textarea>
+      <div class="form-actions" style="margin-top:12px;">
+        <button class="btn btn-outline" onclick="closeExportModal()">Close</button>
+        <button class="btn btn-outline" onclick="downloadExport()"><i class="fas fa-download"></i> Download .md</button>
+        <button class="btn" id="exportCopyBtn" onclick="copyExport()"><i class="fas fa-copy"></i> Copy All</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit modal -->
+  <div class="modal-overlay" id="editModal">
+    <div class="modal-box">
+      <h2><i class="fas fa-edit"></i> Edit Entry</h2>
+      <input type="hidden" id="editId" />
+      <div class="form-row">
+        <label>Title</label>
+        <input type="text" id="editTitle" />
+      </div>
+      <div class="form-row">
+        <label>Content</label>
+        <textarea id="editContent" style="min-height:150px;"></textarea>
+      </div>
+      <div class="form-row">
+        <label>Tags</label>
+        <input type="text" id="editTags" />
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-outline" onclick="closeEditModal()">Cancel</button>
+        <button class="btn" onclick="saveEdit()"><i class="fas fa-save"></i> Save</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ── State ──────────────────────────────────
+    let allEntries = [];
+    const savedAuthor = localStorage.getItem('braindump_author') || '';
+    if (savedAuthor) document.getElementById('entryAuthor').value = savedAuthor;
+
+    // ── API helpers ───────────────────────────
+    async function fetchEntries(params = '') {
+      const res = await fetch('/api/braindump' + params);
+      allEntries = await res.json();
+      renderEntries();
+      updateFilters();
+    }
+
+    const REACTIONS = ['👍', '🔥', '💡', '🐛', '🤔'];
+
+    function renderEntries() {
+      const container = document.getElementById('entriesList');
+
+      // Update stats
+      const totalEntries = allEntries.length;
+      const totalAuthors = new Set(allEntries.map(e => e.author)).size;
+      const pinnedCount = allEntries.filter(e => e.pinned).length;
+      document.getElementById('statsBar').innerHTML = `
+        <span><i class="fas fa-file-alt"></i> ${totalEntries} entries</span>
+        <span><i class="fas fa-users"></i> ${totalAuthors} contributors</span>
+        ${pinnedCount ? `<span><i class="fas fa-thumbtack"></i> ${pinnedCount} pinned</span>` : ''}
+      `;
+
+      if (totalEntries === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <i class="fas fa-brain"></i>
+            <p>No entries yet. Be the first to dump something!</p>
+          </div>`;
+        return;
+      }
+
+      const me = localStorage.getItem('braindump_author') || '';
+
+      container.innerHTML = allEntries.map(e => {
+        const date = timeAgo(e.created_at);
+        const edited = e.updated_at !== e.created_at ? ' (edited)' : '';
+        const pinClass = e.pinned ? 'pinned' : '';
+        const pinIcon = e.pinned ? 'pin-icon' : '';
+        const content = formatContent(e.content);
+        const tags = (e.tags || []).map(t => `<span class="tag" onclick="filterByTag('${esc(t)}')">#${esc(t)}</span>`).join('');
+
+        const reactions = e.reactions || {};
+        const reactionHtml = REACTIONS.map(r => {
+          const voters = reactions[r] || [];
+          const active = voters.includes(me) ? 'active' : '';
+          const count = voters.length;
+          return `<button class="reaction-btn ${active}" onclick="react('${e.id}','${r}')">${r}${count ? '<span class="reaction-count">' + count + '</span>' : ''}</button>`;
+        }).join('');
+
+        return `
+          <div class="entry-card ${pinClass}">
+            <div class="entry-actions">
+              <button onclick="copyEntry('${e.id}')" title="Copy"><i class="fas fa-copy"></i></button>
+              <button onclick="togglePin('${e.id}', ${!e.pinned})" title="${e.pinned ? 'Unpin' : 'Pin'}">
+                <i class="fas fa-thumbtack ${pinIcon}"></i>
+              </button>
+              <button onclick="openEditModal('${e.id}')" title="Edit"><i class="fas fa-edit"></i></button>
+              <button onclick="deleteEntry('${e.id}')" title="Delete"><i class="fas fa-trash"></i></button>
+            </div>
+            <div class="entry-title">${e.pinned ? '📌 ' : ''}${esc(e.title)}</div>
+            <div class="entry-meta">
+              <span><i class="fas fa-user"></i> ${esc(e.author)}</span>
+              <span><i class="fas fa-clock"></i> ${date}${edited}</span>
+            </div>
+            <div class="entry-content">${content}</div>
+            ${tags ? '<div class="entry-tags">' + tags + '</div>' : ''}
+            <div class="reactions">${reactionHtml}</div>
+          </div>`;
+      }).join('');
+    }
+
+    function timeAgo(iso) {
+      const diff = Date.now() - new Date(iso).getTime();
+      const mins = Math.floor(diff / 60000);
+      if (mins < 1) return 'just now';
+      if (mins < 60) return mins + 'm ago';
+      const hrs = Math.floor(mins / 60);
+      if (hrs < 24) return hrs + 'h ago';
+      const days = Math.floor(hrs / 24);
+      if (days < 7) return days + 'd ago';
+      return new Date(iso).toLocaleDateString();
+    }
+
+    function formatContent(text) {
+      // Simple markdown-ish rendering
+      let html = esc(text);
+      // Code blocks: ```...```
+      html = html.replace(/```([\s\S]*?)```/g, '<pre>$1</pre>');
+      // Inline code: `...`
+      html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+      // Bold: **...**
+      html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+      // Italic: *...*
+      html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+      // URLs
+      html = html.replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" style="color:#22f5ff;">$1</a>');
+      return html;
+    }
+
+    function updateFilters() {
+      const tags = new Set();
+      const authors = new Set();
+      allEntries.forEach(e => {
+        (e.tags || []).forEach(t => tags.add(t));
+        if (e.author) authors.add(e.author);
+      });
+
+      const tagSel = document.getElementById('tagFilter');
+      const currentTag = tagSel.value;
+      tagSel.innerHTML = '<option value="">All Tags</option>' + [...tags].sort().map(t => `<option value="${esc(t)}">${esc(t)}</option>`).join('');
+      tagSel.value = currentTag;
+
+      const authSel = document.getElementById('authorFilter');
+      const currentAuth = authSel.value;
+      authSel.innerHTML = '<option value="">All Authors</option>' + [...authors].sort().map(a => `<option value="${esc(a)}">${esc(a)}</option>`).join('');
+      authSel.value = currentAuth;
+    }
+
+    // ── Actions ───────────────────────────────
+    function toggleNewEntry() {
+      document.getElementById('newEntryForm').classList.toggle('open');
+    }
+
+    async function submitEntry() {
+      const author = document.getElementById('entryAuthor').value.trim() || 'Anonymous';
+      const title = document.getElementById('entryTitle').value.trim();
+      const content = document.getElementById('entryContent').value.trim();
+      const tags = document.getElementById('entryTags').value.trim();
+
+      if (!content) { alert('Write something first!'); return; }
+
+      localStorage.setItem('braindump_author', author);
+
+      await fetch('/api/braindump', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ author, title, content, tags }),
+      });
+
+      document.getElementById('entryTitle').value = '';
+      document.getElementById('entryContent').value = '';
+      document.getElementById('entryTags').value = '';
+      toggleNewEntry();
+      fetchEntries();
+    }
+
+    async function deleteEntry(id) {
+      if (!confirm('Delete this entry?')) return;
+      await fetch('/api/braindump/' + id, { method: 'DELETE' });
+      fetchEntries();
+    }
+
+    async function togglePin(id, pinned) {
+      await fetch('/api/braindump/' + id, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pinned }),
+      });
+      fetchEntries();
+    }
+
+    function openEditModal(id) {
+      const entry = allEntries.find(e => e.id === id);
+      if (!entry) return;
+      document.getElementById('editId').value = id;
+      document.getElementById('editTitle').value = entry.title;
+      document.getElementById('editContent').value = entry.content;
+      document.getElementById('editTags').value = (entry.tags || []).join(', ');
+      document.getElementById('editModal').classList.add('open');
+    }
+
+    function closeEditModal() {
+      document.getElementById('editModal').classList.remove('open');
+    }
+
+    async function saveEdit() {
+      const id = document.getElementById('editId').value;
+      const title = document.getElementById('editTitle').value.trim();
+      const content = document.getElementById('editContent').value.trim();
+      const tags = document.getElementById('editTags').value.trim();
+
+      await fetch('/api/braindump/' + id, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, content, tags }),
+      });
+
+      closeEditModal();
+      fetchEntries();
+    }
+
+    function filterByTag(tag) {
+      document.getElementById('tagFilter').value = tag;
+      applyFilters();
+    }
+
+    function applyFilters() {
+      const q = document.getElementById('searchInput').value.trim();
+      const tag = document.getElementById('tagFilter').value;
+      const author = document.getElementById('authorFilter').value;
+      const params = new URLSearchParams();
+      if (q) params.set('q', q);
+      if (tag) params.set('tag', tag);
+      if (author) params.set('author', author);
+      const qs = params.toString();
+      fetchEntries(qs ? '?' + qs : '');
+    }
+
+    function esc(s) {
+      if (!s) return '';
+      const d = document.createElement('div');
+      d.textContent = s;
+      return d.innerHTML;
+    }
+
+    // ── Event listeners ───────────────────────
+    document.getElementById('searchInput').addEventListener('input', debounce(applyFilters, 300));
+    document.getElementById('tagFilter').addEventListener('change', applyFilters);
+    document.getElementById('authorFilter').addEventListener('change', applyFilters);
+
+    // Ctrl+Enter to submit from content textarea
+    document.getElementById('entryContent').addEventListener('keydown', e => {
+      if (e.ctrlKey && e.key === 'Enter') submitEntry();
+    });
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', e => {
+      // Don't fire shortcuts when typing in inputs
+      const tag = document.activeElement.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') {
+        if (e.key === 'Escape') { document.activeElement.blur(); }
+        return;
+      }
+      if (e.key === 'n' || e.key === 'N') {
+        e.preventDefault();
+        if (!document.getElementById('newEntryForm').classList.contains('open')) toggleNewEntry();
+        document.getElementById('entryTitle').focus();
+      }
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        if (!document.getElementById('newEntryForm').classList.contains('open')) toggleNewEntry();
+        document.getElementById('entryTitle').focus();
+      }
+      if (e.key === '/') { e.preventDefault(); document.getElementById('searchInput').focus(); }
+      if (e.key === 'Escape') { closeEditModal(); closeExportModal(); document.getElementById('newEntryForm').classList.remove('open'); }
+    });
+
+    // ── Reactions ─────────────────────────────
+    async function react(entryId, emoji) {
+      const me = localStorage.getItem('braindump_author') || 'Anonymous';
+      await fetch('/api/braindump/' + entryId, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ react: { emoji, user: me } }),
+      });
+      fetchEntries();
+    }
+
+    // ── Export ─────────────────────────────────
+    async function openExportModal() {
+      const res = await fetch('/api/braindump/export');
+      const md = await res.text();
+      document.getElementById('exportContent').value = md;
+      document.getElementById('exportModal').classList.add('open');
+    }
+
+    function closeExportModal() {
+      document.getElementById('exportModal').classList.remove('open');
+    }
+
+    function copyExport() {
+      const textarea = document.getElementById('exportContent');
+      navigator.clipboard.writeText(textarea.value).then(() => {
+        const btn = document.getElementById('exportCopyBtn');
+        btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+        setTimeout(() => { btn.innerHTML = '<i class="fas fa-copy"></i> Copy All'; }, 1500);
+      });
+    }
+
+    function downloadExport() {
+      const text = document.getElementById('exportContent').value;
+      const blob = new Blob([text], { type: 'text/markdown' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'braindump_export.md';
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+
+    // ── Copy entry ────────────────────────────
+    function copyEntry(id) {
+      const entry = allEntries.find(e => e.id === id);
+      if (!entry) return;
+      const text = `${entry.title}\n\n${entry.content}\n\n— ${entry.author}`;
+      navigator.clipboard.writeText(text).then(() => {
+        // Brief visual feedback
+        const btn = event.currentTarget;
+        btn.innerHTML = '<i class="fas fa-check" style="color:#66bb6a;"></i>';
+        setTimeout(() => { btn.innerHTML = '<i class="fas fa-copy"></i>'; }, 1000);
+      });
+    }
+
+    function debounce(fn, ms) {
+      let t;
+      return function(...args) { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
+    }
+
+    // ── Init ──────────────────────────────────
+    fetchEntries();
+  </script>
+</body>
+</html>

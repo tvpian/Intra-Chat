@@ -3,43 +3,19 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MBWH Intra-Chat</title>
+  <title>Intra-Chat</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
   <style>
-    /* ——— MOBILE RESPONSIVE OVERRIDES ——— */
-      @media only screen and (max-width: 600px) {
-        body {
-          justify-content: flex-start;
-          padding: 10px;
-        }
-        textarea#message {
-          width: 90%!important;
-        }
-        ul {
-          width: 90%!important;
-          max-height: 60vh;
-        }
-        #quickActions,
-        #controls {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 6px;
-          justify-content: center;
-        }
-        button,
-        .action-btn {
-          padding: 10px 14px;
-          font-size: 0.9em;
-        }
-        #shortcuts {
-          display: none; /* hide on mobile for space */
-        }
-      }
-    /* === YOUR ORIGINAL CSS === */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: Arial, sans-serif;
-      background-color: #1a1a2e;
-      color: #e0e0e0;
+      font-family: 'Inter', 'Segoe UI', sans-serif;
+      background: #111827;
+      background-image:
+        radial-gradient(ellipse at 20% 50%, rgba(0,200,210,0.12) 0%, transparent 60%),
+        radial-gradient(ellipse at 80% 20%, rgba(20,70,130,0.22) 0%, transparent 50%);
+      color: #f1f5f9;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -48,203 +24,337 @@
       margin: 0;
       position: relative;
     }
-    h1 { color: #00adb5; }
-    textarea#message {
-      padding: 12px;
-      width: 500px;
-      height: 80px;
-      border: 2px solid #00adb5;
-      border-radius: 5px;
-      background-color: #16213e;
-      color: white;
-      margin: 10px 0;
-      resize: vertical;
-      font-family: Arial, sans-serif;
+
+    /* ── Title ──────────────────────────────── */
+    h1 {
+      color: #22f5ff;
+      font-size: 1.6em;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      margin-bottom: 4px;
+      text-shadow: 0 0 24px rgba(34,245,255,0.35);
     }
+    h1 i { margin-right: 8px; opacity: 0.9; }
+
+    /* ── Notification bell ──────────────────── */
+    .notif-wrapper { position: fixed; top: 16px; right: 20px; z-index: 1500; }
+    .notif-bell {
+      background: rgba(0,200,210,0.2); border: 1px solid rgba(34,245,255,0.45);
+      color: #22f5ff; font-size: 1.1em;
+      cursor: pointer; position: relative; padding: 8px;
+      border-radius: 10px; transition: 0.2s;
+    }
+    .notif-bell:hover { background: rgba(0,200,210,0.3); transform: none; box-shadow: none; }
+    .notif-badge {
+      position: absolute; top: -4px; right: -4px;
+      background: #ef5350; color: #fff; font-size: 0.55em; font-weight: 700;
+      border-radius: 50%; min-width: 18px; height: 18px;
+      display: none; align-items: center; justify-content: center; line-height: 1;
+      border: 2px solid #111827;
+    }
+    .notif-badge.show { display: flex; }
+    .notif-dropdown {
+      display: none; position: absolute; top: 44px; right: 0;
+      background: #1a2235; border: 1px solid rgba(34,245,255,0.35);
+      border-radius: 12px;
+      width: 340px; max-height: 420px; overflow-y: auto;
+      box-shadow: 0 16px 48px rgba(0,0,0,0.5);
+      backdrop-filter: blur(12px);
+    }
+    .notif-dropdown.open { display: block; }
+    .notif-header {
+      padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.12);
+      display: flex; justify-content: space-between; align-items: center;
+      font-size: 0.85em; color: #22f5ff; font-weight: 600;
+    }
+    .notif-clear { background: none; border: none; color: #a0b4c8; cursor: pointer; font-size: 0.8em; }
+    .notif-clear:hover { color: #ef5350; transform: none; box-shadow: none; }
+    .notif-item {
+      padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.08);
+      cursor: pointer; transition: 0.15s;
+    }
+    .notif-item:hover { background: rgba(0,200,210,0.15); }
+    .notif-item:last-child { border-bottom: none; }
+    .notif-item .ntitle { font-size: 0.88em; color: #f1f5f9; margin-bottom: 2px; }
+    .notif-item .nbody { font-size: 0.78em; color: #b0c4d8; }
+    .notif-item .ntime { font-size: 0.7em; color: #8899aa; margin-top: 4px; }
+    .notif-empty { padding: 30px; text-align: center; color: #8899aa; font-size: 0.85em; }
+    .notif-toast {
+      position: fixed; top: 20px; right: 70px; z-index: 2000;
+      background: #1a2235; border: 1px solid rgba(34,245,255,0.45);
+      border-radius: 12px;
+      padding: 14px 20px; max-width: 340px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+      animation: slideIn 0.3s ease-out; cursor: pointer;
+      backdrop-filter: blur(12px);
+    }
+    .notif-toast .ntitle { color: #22f5ff; font-size: 0.88em; font-weight: 600; }
+    .notif-toast .nbody { color: #d0dce8; font-size: 0.8em; margin-top: 4px; }
+    @keyframes slideIn { from { transform: translateY(-20px); opacity: 0; } to { transform: none; opacity: 1; } }
+    @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+
+    /* ── Textarea ──────────────────────────── */
+    textarea#message {
+      padding: 14px 16px;
+      width: 560px;
+      height: 80px;
+      border: 2px solid rgba(34,245,255,0.4);
+      border-radius: 12px;
+      background: rgba(26,34,53,0.95);
+      backdrop-filter: blur(8px);
+      color: #f8fafc;
+      margin: 12px 0;
+      resize: vertical;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.92em;
+      line-height: 1.5;
+      transition: border-color 0.3s, box-shadow 0.3s;
+    }
+    textarea#message:focus {
+      outline: none;
+      border-color: rgba(34,245,255,0.7);
+      box-shadow: 0 0 0 3px rgba(0,200,210,0.2);
+    }
+    textarea#message::placeholder { color: #94a3b8; }
+
+    /* ── Buttons ───────────────────────────── */
     button {
-      padding: 12px 20px;
-      background-color: #00adb5;
+      padding: 10px 18px;
+      background: linear-gradient(135deg, #00c8d2 0%, #00a0a8 100%);
       color: white;
       border: none;
-      border-radius: 5px;
+      border-radius: 8px;
       cursor: pointer;
-      margin: 5px;
-      font-weight: bold;
-      transition: 0.3s;
+      margin: 4px;
+      font-weight: 600;
+      font-size: 0.85em;
+      font-family: 'Inter', sans-serif;
+      transition: all 0.2s ease;
+      letter-spacing: 0.2px;
     }
-    button:hover { background-color: #007a85; }
+    button:hover {
+      background: linear-gradient(135deg, #00dce6 0%, #00b5be 100%);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 16px rgba(0,200,210,0.35);
+    }
+    button:active { transform: translateY(0); }
+
+    /* ── Quick actions ─────────────────────── */
+    #quickActions {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .action-btn {
+      background: rgba(20,60,110,0.7);
+      border: 1px solid rgba(34,245,255,0.4);
+      border-radius: 8px;
+      padding: 7px 12px;
+      color: #cbd5e1;
+      font-size: 0.82em;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: 'Inter', sans-serif;
+      font-weight: 500;
+    }
+    .action-btn:hover {
+      background: rgba(0,200,210,0.3);
+      color: #22f5ff;
+      border-color: rgba(34,245,255,0.6);
+      transform: translateY(-1px);
+    }
+
+    /* ── Messages ──────────────────────────── */
     ul {
       list-style-type: none;
       padding: 0;
-      width: 1000px;
-      max-height: 250px;
+      width: 700px;
+      max-height: 320px;
       overflow-y: auto;
-      border: 1px solid #00adb5;
-      border-radius: 5px;
-      background-color: #0f3460;
-      box-shadow: 0 4px 8px rgba(0, 173, 181, 0.3);
+      border: 1px solid rgba(34,245,255,0.3);
+      border-radius: 12px;
+      background: rgba(20,28,45,0.9);
+      backdrop-filter: blur(8px);
+      box-shadow: 0 4px 24px rgba(0,0,0,0.3);
     }
+    ul::-webkit-scrollbar { width: 5px; }
+    ul::-webkit-scrollbar-track { background: transparent; }
+    ul::-webkit-scrollbar-thumb { background: rgba(0,200,210,0.35); border-radius: 3px; }
+    ul::-webkit-scrollbar-thumb:hover { background: rgba(0,200,210,0.55); }
     li {
-      padding: 10px;
-      border-bottom: 1px solid #1a1a2e;
+      padding: 10px 14px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
       white-space: pre-wrap;
+      word-break: break-word;
+      font-size: 0.9em;
+      line-height: 1.55;
+      position: relative;
+      transition: background 0.15s;
     }
-    li:hover {
-      background-color: rgba(0, 173, 181, 0.1);
-    }
-    li:hover .copy-btn {
-      opacity: 1;
-    }
+    li:hover { background: rgba(0,200,210,0.12); }
+    li:hover .copy-btn { opacity: 1; }
     li:last-child { border-bottom: none; }
     .copy-btn {
-      display: block;
-      width: 60px;
-      margin: 8px auto 0 auto;
-      background-color: #00adb5;
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: rgba(0,173,181,0.8);
       color: white;
       border: none;
-      border-radius: 3px;
-      padding: 4px 8px;
+      border-radius: 6px;
+      padding: 3px 8px;
       font-size: 0.7em;
       cursor: pointer;
       opacity: 0;
-      transition: opacity 0.2s ease, background-color 0.2s ease;
-      text-align: center;
+      transition: opacity 0.2s;
     }
-    .copy-btn:hover {
-      background-color: #007a85;
-    }
-    .copy-btn:active {
-      background-color: #005a61;
-    }
+    .copy-btn:hover { background: #00c8d2; transform: none; box-shadow: none; }
+
+    /* ── Shortcuts ──────────────────────────── */
     #shortcuts {
       position: fixed;
-      top: 10px;
-      right: 200px;
-      background-color: rgba(0, 173, 181, 0.1);
-      padding: 5px 8px;
-      border-radius: 5px;
-      width: 50px;
-      font-size: 0.75em;
-      color: #e0e0e0;
+      top: 16px;
+      left: 16px;
+      background: rgba(26,34,53,0.92);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(34,245,255,0.3);
+      padding: 12px 16px;
+      border-radius: 12px;
+      width: 180px;
+      font-size: 0.7em;
+      color: #a0b4c8;
       z-index: 1000;
     }
     #shortcuts h2 {
-      margin: 0 0 5px 0;
-      color: #00adb5;
+      margin: 0 0 8px 0;
+      color: #22f5ff;
       font-size: 0.9em;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
     }
     #shortcuts ul {
       list-style: none;
       margin: 0;
       padding: 0;
+      border: none;
+      background: none;
+      backdrop-filter: none;
+      box-shadow: none;
+      width: auto;
+      max-height: none;
+      overflow-y: visible;
     }
-    #shortcuts li { margin: 2px 0; }
+    #shortcuts li { margin: 3px 0; line-height: 1.4; padding: 0; border: none; }
+    #shortcuts li:hover { background: none; }
+    #shortcuts li strong { color: #c0d0e0; font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.95em; }
+
+    /* ── Modals ─────────────────────────────── */
     .modal-overlay {
       position: fixed;
       top: 0; left: 0;
       width: 100%; height: 100%;
-      background: rgba(0, 0, 0, 0.6);
+      background: rgba(0,0,0,0.65);
+      backdrop-filter: blur(4px);
       display: flex;
       align-items: center;
       justify-content: center;
       z-index: 2000;
     }
     .modal-box {
-      background: #16213e;
-      border-radius: 8px;
-      padding: 20px;
-      width: 300px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+      background: #1a2235;
+      border: 1px solid rgba(34,245,255,0.35);
+      border-radius: 16px;
+      padding: 24px;
+      width: 360px;
+      box-shadow: 0 16px 48px rgba(0,0,0,0.5);
       text-align: center;
-      color: #e0e0e0;
+      color: #f1f5f9;
     }
-    .modal-box h3 {
-      margin-top: 0;
-      color: #00adb5;
-    }
+    .modal-box h3 { margin-top: 0; color: #22f5ff; font-weight: 600; }
     .modal-box ul {
-      text-align: left;
-      padding-left: 20px;
+      text-align: left; padding-left: 20px;
+      border: none; background: none; backdrop-filter: none; box-shadow: none;
+      width: auto; max-height: none; overflow-y: visible;
     }
-    .modal-box li {
-      margin: 8px 0;
-      line-height: 1.4;
-    }
+    .modal-box li { margin: 8px 0; line-height: 1.5; font-size: 0.92em; padding: 0; border: none; }
+    .modal-box li:hover { background: none; }
     .modal-box input[type="text"],
     .modal-box input[type="file"] {
       width: 100%;
-      padding: 10px;
+      padding: 11px 14px;
       margin: 10px 0;
-      border: 2px solid #00adb5;
-      border-radius: 5px;
-      background-color: #1a1a2e;
-      color: #e0e0e0;
+      border: 1px solid rgba(34,245,255,0.35);
+      border-radius: 10px;
+      background: rgba(17,24,39,0.95);
+      color: #f8fafc;
+      font-family: 'Inter', sans-serif;
     }
+    .modal-box input[type="text"]:focus { outline: none; border-color: rgba(0,212,221,0.5); }
     .modal-buttons {
       display: flex;
-      justify-content: space-around;
-    }
-    .modal-buttons button {
-      padding: 8px 12px;
-      background-color: #00adb5;
-      border: none;
-      border-radius: 5px;
-      color: white;
-      cursor: pointer;
-      transition: 0.3s;
-    }
-    .modal-buttons button:hover {
-      background-color: #007a85;
-    }
-    #quickActions {
-      display: flex;
+      justify-content: center;
       gap: 8px;
-      margin-bottom: 8px;
+      margin-top: 14px;
     }
-    .action-btn {
-      background: #00adb5;
-      border: none;
-      border-radius: 4px;
-      padding: 6px 10px;
-      color: white;
-      font-size: 0.9em;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-    .action-btn:hover {
-      background: #007a85;
-    }
-    .logout-btn {
-      background: #dc3545 !important;
-    }
-    .logout-btn:hover {
-      background: #c82333 !important;
+    .modal-buttons button { padding: 9px 18px; border-radius: 8px; }
+    .logout-btn { background: linear-gradient(135deg, #dc3545 0%, #c82333 100%) !important; }
+    .logout-btn:hover { background: linear-gradient(135deg, #e45562 0%, #d63344 100%) !important; }
+
+    /* ——— MOBILE ——— */
+    @media only screen and (max-width: 600px) {
+      body { justify-content: flex-start; padding: 10px; }
+      textarea#message { width: 92% !important; }
+      ul { width: 92% !important; max-height: 55vh; }
+      #quickActions { padding: 0 8px; }
+      button, .action-btn { padding: 9px 12px; font-size: 0.85em; }
+      #shortcuts { display: none; }
+      .notif-dropdown { width: 290px; right: -5px; }
     }
   </style>
 </head>
 <body>
-  <h1>MBWH Intra-Chat</h1>
+  <!-- Notification bell -->
+  <div class="notif-wrapper">
+    <button class="notif-bell" onclick="toggleNotifDropdown()" title="Notifications">
+      <i class="fas fa-bell"></i>
+      <span class="notif-badge" id="notifBadge">0</span>
+    </button>
+    <div class="notif-dropdown" id="notifDropdown">
+      <div class="notif-header">
+        <span>Notifications</span>
+        <button class="notif-clear" onclick="clearNotifs()"><i class="fas fa-trash"></i> Clear all</button>
+      </div>
+      <div id="notifList"><div class="notif-empty">No notifications</div></div>
+    </div>
+  </div>
+
+  <h1><i class="fas fa-comments"></i> Intra-Chat</h1>
 
   <!-- Chat input -->
-  <textarea id="message" placeholder="Type a message & hit Enter" rows="3" autofocus></textarea>
+  <textarea id="message" placeholder="Type a message & hit Enter (Shift+Enter for newline)" rows="3" autofocus></textarea>
 
   <!-- Quick action buttons -->
-    <div id="quickActions">
+  <div id="quickActions">
     <button class="action-btn" data-cmd="/search ">🔍 Search</button>
     <button class="action-btn" data-cmd="/docs ">📚 Docs</button>
     <button class="action-btn" data-cmd="/alert ">🚨 Alert</button>
     <button class="action-btn" data-cmd="/summarize ">📝 Summarize</button>
-    <button id="uploadBtn">📁 Upload</button>
+    <button id="uploadBtn" class="action-btn">📁 Upload</button>
+    <button onclick="window.location='/braindump'" class="action-btn">🧠 Brain Dump</button>
   </div>
 
   <!-- Hidden file input -->
   <input type="file" id="fileInput" style="display:none;" />
 
   <!-- Control buttons -->
-  <button id="sendBtn">Send</button>
-  <button id="historyBtn">History</button>
-  <button id="manualBtn" style="display:none;">Tech Manual</button>
+  <div>
+    <button id="sendBtn"><i class="fas fa-paper-plane"></i> Send</button>
+    <button id="historyBtn"><i class="fas fa-history"></i> History</button>
+    <button id="manualBtn" style="display:none;">Tech Manual</button>
+  </div>
 
   <!-- Chat messages -->
   <ul id="messages"></ul>
@@ -258,6 +368,7 @@
       <li><strong>Ctrl + m</strong> - Tech Manual</li>
       <li><strong>Ctrl + u</strong> - Change Username</li>
       <li><strong>Ctrl + e</strong> - Export msg</li>
+      <li><strong>Ctrl + b</strong> - Brain Dump</li>
       <li><strong>Ctrl + l</strong> - Logout</li>
       <li><strong>/search</strong> - Search manual</li>
       <li><strong>/docs</strong> - Team docs</li>
@@ -293,7 +404,7 @@
   <!-- "What's New" modal -->
   <div id="updateModal" class="modal-overlay" style="display:none;">
     <div class="modal-box">
-      <h3 id="updateTitle">🚀 What's New in MBWH Intra-Chat</h3>
+      <h3 id="updateTitle">🚀 Welcome to Intra-Chat</h3>
       <div id="updateContent">
         <p><strong>Version 1.7.0 - Patch Update!</strong></p>
         <ul>
@@ -308,7 +419,7 @@
           <li>🎯 <strong>Username Stripping</strong> - Clean copy without usernames</li>
           <li>💾 <strong>Debug & Logging</strong> - Better troubleshooting tools</li>
         </ul>
-        <p style="margin-top: 15px; font-size: 0.9em; color: #00adb5;">
+        <p style="margin-top: 15px; font-size: 0.9em; color: #22f5ff;">
           <strong>New:</strong> Use <code>/docs</code> command or 📚 button to access team documentation!
         </p>
       </div>
@@ -384,7 +495,7 @@
       }, { once: true });
 
       // --- Quick Actions ---
-      document.querySelectorAll('.action-btn:not(.logout-btn)').forEach(btn => {
+      document.querySelectorAll('.action-btn[data-cmd]').forEach(btn => {
         btn.addEventListener('click', () => {
           input.value = btn.dataset.cmd;
           input.focus();
@@ -402,14 +513,40 @@
         input.focus();
       });
       fileModalInput.addEventListener("change", () => {
-        fileInput.files = fileModalInput.files;
+        // no direct assignment to fileInput.files (FileList is read-only in most browsers)
       });
       uploadConfirm.addEventListener("click", () => {
+        const file = fileModalInput.files && fileModalInput.files[0];
+        if (!file) { uploadModal.style.display = "none"; return; }
         uploadModal.style.display = "none";
-        fileInput.dispatchEvent(new Event("change"));
+        const form = new FormData();
+        form.append("file", file);
+        fetch("/upload", { method: "POST", body: form })
+          .then(r => r.json())
+          .then(data => {
+            if (data.url) {
+              // Build a richer message showing original name and category
+              const metaParts = [];
+              if (data.category_label) metaParts.push(data.category_label);
+              if (data.collision) metaParts.push(`stored as ${data.saved_as}`);
+              const meta = metaParts.length ? ` [${metaParts.join(' · ')}]` : "";
+              socket.send(JSON.stringify({
+                msg: data.url,
+                isFile: true,
+                name: data.name + meta
+              }));
+            } else if (data.error) {
+              alert("Upload failed: " + data.error);
+            }
+          })
+          .catch(err => alert("Upload error: " + err))
+          .finally(() => {
+            fileModalInput.value = "";
+            input.focus();
+          });
       });
 
-      // --- File Upload Handler ---
+      // --- File Upload Handler (legacy single hidden input path retained for compatibility) ---
       fileInput.addEventListener("change", function() {
         const file = this.files[0];
         if (!file) return;
@@ -419,10 +556,14 @@
           .then(r => r.json())
           .then(data => {
             if (data.url) {
+              const metaParts = [];
+              if (data.category_label) metaParts.push(data.category_label);
+              if (data.collision) metaParts.push(`stored as ${data.saved_as}`);
+              const meta = metaParts.length ? ` [${metaParts.join(' · ')}]` : "";
               socket.send(JSON.stringify({
-                msg:    data.url,
+                msg: data.url,
                 isFile: true,
-                name:   data.name
+                name: data.name + meta
               }));
             }
           })
@@ -453,6 +594,12 @@
         // auto-dismiss
         setTimeout(() => document.body.removeChild(overlay), 5000);
       }
+
+      // --- Auto-grow textarea ---
+      input.addEventListener('input', () => {
+        input.style.height = '52px';
+        input.style.height = Math.min(input.scrollHeight, 120) + 'px';
+      });
 
       // --- sendMessage with commands ---
       function sendMessage() {
@@ -488,6 +635,7 @@
           socket.send(username + ": " + raw);
         }
         input.value = "";
+        input.style.height = '52px';
       }
 
       // --- Bind Sending ---
@@ -550,6 +698,7 @@
 
         if (e.ctrlKey && e.key==="h") { e.preventDefault(); historyBtn.click(); }
         if (e.ctrlKey && e.key==="m") { e.preventDefault(); manualBtn.click(); }
+        if (e.ctrlKey && e.key==="b") { e.preventDefault(); window.location.href = "/braindump"; }
         if (e.ctrlKey && e.key==="l") { 
           e.preventDefault(); 
           if (confirm("Are you sure you want to logout?")) {
@@ -620,11 +769,11 @@
             img.src=url; img.style.maxWidth="300px"; img.style.display="block";
             messageContent.appendChild(img);
             const cap=document.createElement("div");
-            cap.textContent=name; cap.style.color="#aaa"; cap.style.fontSize="0.8em";
+            cap.textContent=name; cap.style.color="#94a3b8"; cap.style.fontSize="0.8em";
             cap.style.marginTop="4px"; messageContent.appendChild(cap);
           } else {
             const a=document.createElement("a");
-            a.href=url; a.textContent=name; a.download=name; a.style.color="#00adb5";
+            a.href=url; a.textContent=name; a.download=name; a.style.color="#22f5ff";
             messageContent.appendChild(a);
           }
         } else {
@@ -777,7 +926,7 @@
       button.style.backgroundColor = "#28a745";
       setTimeout(() => {
         button.innerHTML = originalText;
-        button.style.backgroundColor = "#00adb5";
+        button.style.backgroundColor = "#00c8d2";
       }, 1000);
     }
 
@@ -796,6 +945,114 @@
       }
       document.body.removeChild(tmp);
     }
+
+    // ── Notification system ───────────────────
+    let notifUnread = 0;
+    const notifSocket = io();
+
+    // Request browser notification permission
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+
+    function toggleNotifDropdown() {
+      const dd = document.getElementById('notifDropdown');
+      dd.classList.toggle('open');
+      if (dd.classList.contains('open')) {
+        notifUnread = 0;
+        updateBadge();
+        loadNotifications();
+      }
+    }
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', e => {
+      const wrapper = document.querySelector('.notif-wrapper');
+      if (wrapper && !wrapper.contains(e.target)) {
+        document.getElementById('notifDropdown').classList.remove('open');
+      }
+    });
+
+    function updateBadge() {
+      const badge = document.getElementById('notifBadge');
+      badge.textContent = notifUnread;
+      badge.classList.toggle('show', notifUnread > 0);
+    }
+
+    function loadNotifications() {
+      fetch('/api/notifications').then(r => r.json()).then(renderNotifList);
+    }
+
+    function renderNotifList(notifs) {
+      const container = document.getElementById('notifList');
+      if (!notifs.length) {
+        container.innerHTML = '<div class="notif-empty">No notifications</div>';
+        return;
+      }
+      container.innerHTML = notifs.map(n => {
+        const ago = notifTimeAgo(n.created_at);
+        return `<div class="notif-item" onclick="${n.link ? "window.location='" + n.link + "'" : ''}">
+          <div class="ntitle">${notifEsc(n.title)}</div>
+          <div class="nbody">${notifEsc(n.body)}</div>
+          <div class="ntime">${ago}</div>
+        </div>`;
+      }).join('');
+    }
+
+    function clearNotifs() {
+      fetch('/api/notifications/clear', { method: 'POST' }).then(() => {
+        notifUnread = 0;
+        updateBadge();
+        loadNotifications();
+      });
+    }
+
+    function showToast(notif) {
+      const toast = document.createElement('div');
+      toast.className = 'notif-toast';
+      toast.innerHTML = `<div class="ntitle">${notifEsc(notif.title)}</div><div class="nbody">${notifEsc(notif.body)}</div>`;
+      if (notif.link) toast.onclick = () => { window.location = notif.link; };
+      document.body.appendChild(toast);
+      setTimeout(() => { toast.style.animation = 'fadeOut 0.3s ease-out forwards'; setTimeout(() => toast.remove(), 300); }, 4000);
+    }
+
+    function sendBrowserNotif(notif) {
+      if ('Notification' in window && Notification.permission === 'granted') {
+        new Notification(notif.title, { body: notif.body, icon: '/static/favicon.ico' });
+      }
+    }
+
+    notifSocket.on('notification', notif => {
+      notifUnread++;
+      updateBadge();
+      showToast(notif);
+      sendBrowserNotif(notif);
+    });
+
+    function notifTimeAgo(iso) {
+      const diff = Date.now() - new Date(iso).getTime();
+      const mins = Math.floor(diff / 60000);
+      if (mins < 1) return 'just now';
+      if (mins < 60) return mins + 'm ago';
+      const hrs = Math.floor(mins / 60);
+      if (hrs < 24) return hrs + 'h ago';
+      return Math.floor(hrs / 24) + 'd ago';
+    }
+
+    function notifEsc(s) {
+      if (!s) return '';
+      const d = document.createElement('div');
+      d.textContent = s;
+      return d.innerHTML;
+    }
+
+    // Load initial count
+    fetch('/api/notifications').then(r => r.json()).then(notifs => {
+      // Show badge if there are recent notifications (last hour)
+      const recent = notifs.filter(n => (Date.now() - new Date(n.created_at).getTime()) < 3600000);
+      notifUnread = recent.length;
+      updateBadge();
+    });
 
   </script>
 </body>

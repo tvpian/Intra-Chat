@@ -1,14 +1,20 @@
+# systemd service template for Intra-Chat
+# 1. Copy:  sudo cp intra_chat.service.template /etc/systemd/system/intra_chat.service
+# 2. Edit the User, WorkingDirectory and ExecStart lines below.
+# 3. sudo systemctl daemon-reload && sudo systemctl enable --now intra_chat
+
 [Unit]
-Description=Flask Chat Application
+Description=Intra-Chat (Flask-SocketIO)
 After=network.target
 
 [Service]
+Type=simple
 User=YOUR_USERNAME
-WorkingDirectory=/path/to/your/chat/app
-Environment=APP_PASSWORD=your_secure_password_here
-Environment=SECRET_KEY=your_secret_key_here
-ExecStart=/path/to/python3 /path/to/your/chat/app/app.py
-Restart=always
+WorkingDirectory=/path/to/Intra-Chat
+EnvironmentFile=/path/to/Intra-Chat/.env
+ExecStart=/usr/bin/python3 /path/to/Intra-Chat/app.py
+Restart=on-failure
+RestartSec=5
 
 [Install]
 WantedBy=multi-user.target

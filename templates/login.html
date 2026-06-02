@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Intra-Chat – Login</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+:root {
+  --card: rgba(26,34,53,.92);
+  --fg:#f1f5f9; --muted:#94a3b8;
+  --acc:#22f5ff;
+  --border:rgba(34,245,255,0.25);
+  --input-bg:rgba(20,28,45,0.9); --input-border:rgba(34,245,255,0.3);
+  --btn-bg:linear-gradient(135deg, #00c8d2, #00a0a8);
+  --btn-hover:linear-gradient(135deg, #00dce6, #00b5be);
+}
+* { box-sizing:border-box; font-family:'Inter','Segoe UI',Roboto,Helvetica,Arial,sans-serif; }
+body {
+  margin:0; min-height:100vh; color:var(--fg);
+  display:flex; align-items:center; justify-content:center; padding:2rem;
+  background:#111827;
+  background-image:
+    radial-gradient(ellipse at 20% 50%, rgba(0,200,210,0.12) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 20%, rgba(20,70,130,0.22) 0%, transparent 50%);
+  background-size:200% 200%;
+  animation:bg-pan 28s ease-in-out infinite alternate;
+}
+@keyframes bg-pan { 0%{background-position:0% 0%} 100%{background-position:100% 100%} }
+.card {
+  background:var(--card); border:1px solid var(--border); border-radius:16px;
+  padding:2.5rem 2rem; max-width:420px; width:100%;
+  box-shadow:0 20px 48px rgba(0,0,0,.4);
+  backdrop-filter:blur(12px);
+}
+h1 {
+  margin:0 0 .5rem; font-size:1.9rem; font-weight:700; text-align:center;
+  color:var(--acc); text-shadow:0 0 24px rgba(34,245,255,0.35);
+}
+.subtitle { text-align:center; color:var(--muted); font-size:.95rem; margin:0 0 1.75rem; }
+form { display:flex; flex-direction:column; gap:1.1rem; }
+label { font-size:.75rem; text-transform:uppercase; letter-spacing:.05em; font-weight:600; color:var(--muted); }
+input[type=password] {
+  width:100%; padding:.75rem 1rem; border-radius:10px; border:2px solid var(--input-border);
+  background:var(--input-bg); color:var(--fg); font-size:1rem; outline:none;
+  font-family:'Inter', sans-serif;
+  transition:border-color .18s, box-shadow .18s;
+}
+input[type=password]:focus { border-color:var(--acc); box-shadow:0 0 0 3px rgba(0,200,210,.2); }
+input[type=password]::placeholder { color:#94a3b8; }
+button {
+  padding:.8rem 1rem; border-radius:10px; border:none;
+  background:var(--btn-bg); color:#fff; font-size:1rem; font-weight:600; cursor:pointer;
+  font-family:'Inter', sans-serif;
+  transition:all .2s;
+}
+button:hover { background:var(--btn-hover); transform:translateY(-1px); box-shadow:0 4px 16px rgba(0,200,210,.35); }
+button:active { transform:translateY(0); }
+.err { color:#ff6b6b; font-size:.9rem; text-align:center; margin-top:.25rem; font-weight:600; }
+.note { font-size:.8rem; color:var(--muted); text-align:center; margin-top:.6rem; font-style:italic; }
+footer { margin-top:1.2rem; text-align:center; color:var(--muted); font-size:.75rem; }
+.badge {
+  display:inline-block; background:rgba(0,200,210,.08); border:1px solid var(--border);
+  padding:.35rem .75rem; border-radius:999px; font-size:.75rem; color:#94a3b8;
+}
+@media (max-width:520px){ body{padding:1rem;} .card{padding:2rem 1.25rem;} }
+</style>
+</head>
+<body>
+  <div class="card">
+    <h1>Intra-Chat</h1>
+    <p class="subtitle">Secure local network workspace</p>
+    <form method="POST" action="/login" autocomplete="off">
+      <div>
+        <label for="pw">Password</label>
+        <input id="pw" type="password" name="password" placeholder="Enter password" autofocus required />
+      </div>
+      <button type="submit">Enter Workspace</button>
+      {{ err_html|safe }}
+      <div class="note">"{{ quote }}"</div>
+    </form>
+    <footer><span class="badge">Private · LAN only</span></footer>
+  </div>
+</body>
+</html>
