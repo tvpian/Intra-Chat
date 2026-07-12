@@ -81,6 +81,40 @@ feature, JSON files for storage. The whole thing fits in your head.
 </tr>
 </table>
 
+### Workspaces & project knowledge base
+
+Every member gets a personal workspace. Organise notes into **projects**,
+keep them private or flip a whole project **Public** to share it on the team
+board. Each project is its own searchable, taggable knowledge base.
+
+<table>
+<tr>
+<td align="center" width="50%"><b>My Workspace</b><br/><img src="docs/screenshots/07-workspace.png" alt="Personal workspace with projects"/></td>
+<td align="center" width="50%"><b>Knowledge base</b><br/><img src="docs/screenshots/08-knowledge.png" alt="Project knowledge base entries"/></td>
+</tr>
+</table>
+
+### Lab equipment inventory
+
+Track assets with **printable, meaningful tags** (`LAB138-SEN-0003` = lab no ·
+category · procurement order), an **In-charge** owner picked from your team
+roster, and a full status set (Available / In Use / Borrowed / Lost / Retired
+/ Broken). Check-out / check-in with history and CSV/Markdown export.
+
+<table>
+<tr>
+<td align="center" width="60%"><b>Inventory</b><br/><img src="docs/screenshots/09-inventory.png" alt="Lab equipment inventory"/></td>
+<td align="center" width="40%"><b>On a phone</b><br/><img src="docs/screenshots/11-mobile.png" alt="Inventory on a mobile screen"/></td>
+</tr>
+</table>
+
+### Agent / API integration
+
+Mint scoped **API keys** so coding agents and scripts can push knowledge into
+a project programmatically — no browser required.
+
+<p align="center"><img src="docs/screenshots/10-api-keys.png" alt="Agent API key management" width="80%"/></p>
+
 > Want to record a GIF for your own fork? Drop it in `docs/screenshots/` and
 > reference it here.
 
