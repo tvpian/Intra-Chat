@@ -3,8 +3,9 @@
 # 💬 Intra-Chat
 
 **A self-hosted, real-time chat for your team's local network — with file
-sharing, a searchable command manual, a shared brain-dump board, and an
-optional local-LLM summariser.**
+sharing, a searchable command manual, a shared brain-dump board, personal
+workspaces, a project knowledge base, a lab-equipment inventory, an agent
+API, and an optional local-LLM summariser.**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
@@ -50,14 +51,18 @@ feature, JSON files for storage. The whole thing fits in your head.
 | 💬 | **Real-time chat** | Socket.IO-powered, persistent across reloads, message history with sane retention. |
 | 📁 | **Smart file uploads** | Drag-and-drop with auto-categorisation across 14 buckets (code, images, robotics, configs, models, …). |
 | 📒 | **Tech manual** | Press `Ctrl+E` on any chat message to pin it into a searchable reference book with a category. |
-| 🧠 | **Brain dump board** | Long-form, taggable, reaction-able knowledge entries. Pin the important ones. Export as Markdown. |
+| 🧠 | **Brain dump board** | Long-form, taggable, reaction-able knowledge entries. Public to the team by default, export as Markdown. |
+| 🗂️ | **Personal workspaces** | Per-member sign-in with a personal passcode. Organise notes into **projects**, keep them private or share with the team. Toggle a whole project public in one click. |
+| 📚 | **Project knowledge base** | Searchable, tagged knowledge entries grouped by project — the durable memory behind the chat noise. |
+| 📦 | **Lab equipment inventory** | Track assets with **printable, meaningful tags** (e.g. `LAB138-SEN-0003` = lab no · category · procurement order), an **In-charge** owner picked from your team roster, and statuses (Available / In Use / Borrowed / Lost / Retired / Broken). Check-out / check-in with history, CSV/Markdown export. |
+| 🤖 | **Agent / API integration** | Issue scoped **API keys** so coding agents and scripts can push knowledge programmatically. See [docs/AGENT_INTEGRATION.md](docs/AGENT_INTEGRATION.md). |
 | 🔔 | **Live notifications** | Toast + bell badge + browser notifications on every new brain-dump or system event. |
 | 🚨 | **Broadcast alerts** | `/alert your message` plays a sound for every connected client — perfect for "build's broken". |
 | 📚 | **Team docs** | Point `TEAM_DOCS_PATH` at a folder of `.md` files and they show up at `/docs` and inside the manual search. |
 | 🤖 | **AI summarise** | `/summarize` calls a local [Ollama](https://ollama.com) model. No API keys. No data leaves your box. |
-| 🔐 | **Auth** | Single shared password + IP allow-listing + lockout-on-brute-force. |
+| 🔐 | **Auth** | Single shared password + per-member passcodes + IP allow-listing + lockout-on-brute-force. |
 | ⌨️ | **Power-user shortcuts** | `Ctrl+H/M/U/E/B/L`, slash-commands, copy-with-username-stripped, message export, … |
-| 📱 | **Mobile-friendly** | Works as well on a phone in the lab as on your desktop. |
+| 📱 | **Mobile-friendly** | Fully responsive — every page (chat, workspace, inventory, knowledge, manual, API keys) adapts to phones and small screens. |
 
 ## Screenshots
 
@@ -113,6 +118,8 @@ the values you care about. The most useful options:
 | `OLLAMA_MODEL`    | `llama3.2`               | Model used by `/summarize`                             |
 | `MAX_ATTEMPTS`    | `5`                      | Failed login lockout threshold                         |
 | `LOCK_MS`         | `30000`                  | Lockout duration in milliseconds                       |
+| `LAB_NO`          | `138`                    | Lab number embedded in printable inventory asset tags  |
+| `TEAM_ROSTER`     | _(unset)_                | Comma-separated extra names for the inventory In-charge picker |
 | `DEBUG_LOGS`      | `0`                      | Set `1` to write upload/auth debug logs to disk        |
 
 ## Optional: local AI with Ollama
@@ -129,6 +136,24 @@ ollama serve
 ```
 
 Switch the model at any time by setting `OLLAMA_MODEL` in `.env`.
+
+## Agent & API integration
+
+Beyond the browser UI, Intra-Chat exposes a small HTTP API so coding agents
+and scripts can push knowledge into a project automatically. Mint a scoped
+key at `/admin/api-keys` (or `POST /api/keys`), then authenticate with
+`Authorization: Bearer <key>`.
+
+```bash
+export INTRA_CHAT_URL="http://localhost:5656"
+export INTRA_CHAT_KEY="ic_<project>_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+export INTRA_CHAT_PROJECT="<project>"
+
+python3 scripts/kb_push.py --title "Deploy steps" --file NOTES.md
+```
+
+Keys are shown once and stored only as a hash. Full details, endpoints, and
+examples live in [docs/AGENT_INTEGRATION.md](docs/AGENT_INTEGRATION.md).
 
 ## Slash commands & shortcuts
 
@@ -217,10 +242,19 @@ Intra-Chat/
 │   ├── history.html
 │   ├── manual.html
 │   ├── docs.html
-│   └── braindump.html
+│   ├── braindump.html
+│   ├── workspace.html          # Personal workspaces & projects
+│   ├── knowledge.html          # Project knowledge base
+│   ├── inventory.html          # Lab equipment inventory
+│   └── api_keys.html           # Agent API-key management
+├── scripts/
+│   ├── kb_push.py              # Push knowledge via the API
+│   └── kb_demo.sh              # End-to-end API demo
+├── docs/
+│   ├── AGENT_INTEGRATION.md    # Agent/API guide
+│   └── screenshots/            # README assets
 ├── static/                     # alert.mp3, fonts, etc.
-├── uploads/                    # File storage (auto-categorised)
-└── docs/screenshots/           # README assets
+└── uploads/                    # File storage (auto-categorised)
 ```
 
 ## Contributing

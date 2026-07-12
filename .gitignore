@@ -18,9 +18,29 @@ venv/
 
 # Runtime data (don't commit user content)
 chat_history.json
+chat_history.live_msg.json
 tech_manual.json
 braindump.json
 notifications.json
+inventory.json
+members.json
+projects.json
+api_keys.json
+
+# Recovery artifacts & raw dumps (local only, never publish)
+*.recovered
+*.recovered_all
+*.broken.json
+recovered/
+recovered_all/
+recovered2/
+parse_all.py
+parse_recovered.py
+parse_recovered2.py
+recover_all.sh
+recover_brain.sh
+recover_data.sh
+recover_data2.sh
 
 # Uploads (everything except the placeholder)
 uploads/*

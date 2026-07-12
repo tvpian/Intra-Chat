@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Workspace</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', 'Segoe UI', sans-serif;
+      background: #111827;
+      background-image:
+        radial-gradient(ellipse at 20% 50%, rgba(0,200,210,0.12) 0%, transparent 60%),
+        radial-gradient(ellipse at 80% 20%, rgba(20,70,130,0.22) 0%, transparent 50%);
+      color: #f1f5f9; min-height: 100vh;
+    }
+    .header {
+      background: rgba(26,34,53,0.92); backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(34,245,255,0.2); padding: 15px 25px;
+      display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 100;
+    }
+    .header h1 { color: #22f5ff; font-size: 1.3em; font-weight: 700; text-shadow: 0 0 20px rgba(34,245,255,0.25); }
+    .header h1 i { margin-right: 8px; }
+    .header-links { display: flex; gap: 16px; align-items: center; }
+    .back-link { color: #22f5ff; text-decoration: none; font-size: 0.9em; font-weight: 500; }
+    .back-link:hover { text-decoration: underline; }
+    .whoami { font-size: 0.85em; color: #94a3b8; }
+    .whoami strong { color: #34d399; }
+
+    .container { max-width: 900px; margin: 0 auto; padding: 26px 25px 60px; }
+
+    select, input, textarea {
+      padding: 9px 14px; background: rgba(20,28,45,0.9);
+      border: 1px solid rgba(34,245,255,0.3); border-radius: 8px;
+      color: #f8fafc; font-size: 0.9em; font-family: 'Inter', sans-serif;
+    }
+    select:focus, input:focus, textarea:focus { outline: none; border-color: rgba(34,245,255,0.6); }
+    input::placeholder, textarea::placeholder { color: #94a3b8; }
+    .btn {
+      padding: 9px 18px; background: linear-gradient(135deg, #00c8d2 0%, #00a0a8 100%);
+      color: #fff; border: none; border-radius: 8px; cursor: pointer;
+      font-weight: 600; font-size: 0.9em; font-family: 'Inter', sans-serif; transition: all 0.2s;
+    }
+    .btn:hover { background: linear-gradient(135deg, #00dce6 0%, #00b5be 100%); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(0,200,210,0.35); }
+    .btn-outline { background: transparent; border: 1px solid rgba(34,245,255,0.4); color: #22f5ff; }
+    .btn-outline:hover { background: rgba(34,245,255,0.1); box-shadow: none; }
+    .btn-danger { background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%); }
+    .btn-danger:hover { background: linear-gradient(135deg, #f05252 0%, #c81e1e 100%); box-shadow: 0 4px 16px rgba(239,68,68,0.3); }
+    .btn-sm { padding: 5px 11px; font-size: 0.8em; }
+
+    .card {
+      background: rgba(26,34,53,0.75); border: 1px solid rgba(34,245,255,0.18);
+      border-radius: 12px; padding: 20px; margin-bottom: 22px;
+    }
+    .card h3 { color: #22f5ff; font-size: 1em; margin-bottom: 14px; }
+    .hint { font-size: 0.8em; color: #94a3b8; margin-top: 8px; }
+    .hint a { color: #22f5ff; }
+
+    /* Sign-in */
+    #signinCard { max-width: 440px; margin: 60px auto; }
+    #signinCard .form-grid { display: flex; flex-direction: column; gap: 12px; }
+    #signinCard input { width: 100%; }
+
+    /* Project tree */
+    .toolbar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 18px; }
+    .toolbar input { flex: 1; min-width: 200px; }
+
+    .project {
+      background: rgba(26,34,53,0.7); border: 1px solid rgba(148,163,184,0.16);
+      border-radius: 12px; margin-bottom: 14px; overflow: hidden;
+    }
+    .project.pub { border-color: rgba(52,211,153,0.4); }
+    .project-head {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 10px; padding: 14px 18px; cursor: pointer;
+    }
+    .project-head:hover { background: rgba(34,245,255,0.04); }
+    .project-title { display: flex; align-items: center; gap: 10px; }
+    .project-title .chev { color: #64748b; transition: transform 0.2s; }
+    .project.open .chev { transform: rotate(90deg); }
+    .project-name { font-size: 1.05em; font-weight: 600; color: #f8fafc; }
+    .project-meta { font-size: 0.78em; color: #94a3b8; }
+    .project-actions { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+
+    .badge { font-size: 0.72em; padding: 2px 9px; border-radius: 20px; font-weight: 600; }
+    .badge-pub { background: rgba(52,211,153,0.18); color: #34d399; }
+    .badge-priv { background: rgba(245,158,11,0.18); color: #fbbf24; }
+    .badge-count { background: rgba(34,245,255,0.15); color: #22f5ff; }
+    .badge-agent { background: rgba(139,92,246,0.18); color: #c4b5fd; }
+    .badge-tag { background: rgba(148,163,184,0.15); color: #cbd5e1; }
+
+    /* Switch */
+    .switch { position: relative; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.78em; color: #cbd5e1; }
+    .switch input { display: none; }
+    .slider { width: 38px; height: 20px; background: rgba(148,163,184,0.3); border-radius: 20px; position: relative; transition: 0.2s; }
+    .slider::before { content: ''; position: absolute; width: 16px; height: 16px; border-radius: 50%; background: #fff; top: 2px; left: 2px; transition: 0.2s; }
+    .switch input:checked + .slider { background: #34d399; }
+    .switch input:checked + .slider::before { transform: translateX(18px); }
+
+    .project-body { display: none; padding: 0 18px 16px; border-top: 1px solid rgba(148,163,184,0.12); }
+    .project.open .project-body { display: block; }
+
+    .kb-add { display: flex; flex-direction: column; gap: 8px; margin: 14px 0; }
+    .kb-add textarea { min-height: 70px; resize: vertical; }
+    .kb-add .row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .kb-add .row > input { flex: 1; min-width: 130px; }
+
+    .entry {
+      background: rgba(20,28,45,0.6); border: 1px solid rgba(148,163,184,0.12);
+      border-radius: 10px; padding: 12px 14px; margin-bottom: 10px;
+    }
+    .entry-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+    .entry-title { font-weight: 600; color: #f1f5f9; font-size: 0.95em; }
+    .entry-body { margin-top: 6px; color: #cbd5e1; font-size: 0.88em; white-space: pre-wrap; line-height: 1.5; }
+    .entry-meta { font-size: 0.74em; color: #94a3b8; margin-top: 6px; }
+    .badges { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 7px; align-items: center; }
+    .entry-actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+
+    .empty { text-align: center; color: #64748b; padding: 30px 20px; font-size: 0.9em; }
+    .empty-lg { padding: 50px 20px; }
+    .empty i { font-size: 2em; margin-bottom: 10px; display: block; opacity: 0.5; }
+
+    /* Modal */
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(3px); z-index: 200; align-items: center; justify-content: center; padding: 20px; }
+    .modal-overlay.open { display: flex; }
+    .modal { background: #1a2235; border: 1px solid rgba(34,245,255,0.3); border-radius: 14px; padding: 22px; width: 100%; max-width: 540px; max-height: 90vh; overflow-y: auto; }
+    .modal h3 { color: #22f5ff; margin-bottom: 16px; }
+    .modal .form-grid { display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px; }
+    .modal input, .modal textarea, .modal select { width: 100%; }
+    .modal textarea { min-height: 120px; resize: vertical; }
+    .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+    .field-label { font-size: 0.8em; color: #94a3b8; margin-bottom: 4px; display: block; }
+    .keybox { background: #0b1220; border: 1px solid rgba(52,211,153,0.4); border-radius: 8px; padding: 12px; font-family: monospace; font-size: 0.85em; color: #34d399; word-break: break-all; margin: 10px 0; }
+
+    /* ——— Responsive / mobile ——— */
+    @media (max-width: 640px) {
+      .header { flex-direction: column; align-items: flex-start; gap: 10px; padding: 12px 16px; }
+      .header-links { flex-wrap: wrap; gap: 10px 14px; width: 100%; }
+      .container { padding: 18px 16px 50px; }
+      #signinCard { margin: 30px auto; }
+      .toolbar input { min-width: 0; width: 100%; }
+      .project-header { flex-direction: column; align-items: flex-start; gap: 10px; }
+      .project-actions { width: 100%; }
+      .entry-top { flex-direction: column; align-items: stretch; }
+      .modal { padding: 18px; }
+      .modal-actions { flex-direction: column-reverse; }
+      .modal-actions .btn { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1><i class="fas fa-sitemap"></i> My Workspace</h1>
+    <div class="header-links">
+      <span class="whoami" id="whoami"></span>
+      <a class="back-link" href="/braindump"><i class="fas fa-users"></i> Team Board</a>
+      <a class="back-link" href="/"><i class="fas fa-arrow-left"></i> Chat</a>
+      <a class="back-link" href="#" id="signoutLink" style="display:none;" onclick="signout(); return false;"><i class="fas fa-sign-out-alt"></i> Sign out</a>
+    </div>
+  </div>
+
+  <div class="container">
+    <!-- Sign in / create identity -->
+    <div class="card" id="signinCard" style="display:none;">
+      <h3><i class="fas fa-user-lock"></i> Sign in to your workspace</h3>
+      <div class="form-grid">
+        <input type="text" id="siName" placeholder="Your name (e.g. Alex)" autocomplete="off">
+        <input type="password" id="siPass" placeholder="Your personal passcode" autocomplete="off">
+        <button class="btn" onclick="doAuth()"><i class="fas fa-arrow-right"></i> Continue</button>
+      </div>
+      <div class="hint">First time? Just pick a name and a passcode — it creates your private workspace.
+        Your passcode protects your knowledge bases so only you can edit them.</div>
+    </div>
+
+    <!-- Workspace -->
+    <div id="workspace" style="display:none;">
+      <div class="card">
+        <h3><i class="fas fa-folder-plus"></i> New project</h3>
+        <div class="toolbar" style="margin-bottom:0;">
+          <input type="text" id="newProjectName" placeholder="Project name (e.g. Navigation Stack)">
+          <button class="btn" onclick="createProject()"><i class="fas fa-plus"></i> Create project</button>
+        </div>
+        <div class="hint">Each project has its own knowledge base. Toggle a project (or individual notes)
+          <strong>Public</strong> to share it on the Team Board; everything is private by default.</div>
+      </div>
+
+      <div id="projectList"></div>
+    </div>
+  </div>
+
+  <!-- Edit entry modal -->
+  <div class="modal-overlay" id="editModal">
+    <div class="modal">
+      <h3><i class="fas fa-edit"></i> Edit note</h3>
+      <div class="form-grid">
+        <div><label class="field-label">Title</label><input type="text" id="editTitle"></div>
+        <div><label class="field-label">Content</label><textarea id="editContent"></textarea></div>
+        <div><label class="field-label">Tags (comma separated)</label><input type="text" id="editTags"></div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-outline" onclick="closeEdit()">Cancel</button>
+        <button class="btn" onclick="saveEdit()"><i class="fas fa-save"></i> Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- API key modal -->
+  <div class="modal-overlay" id="keyModal">
+    <div class="modal">
+      <h3><i class="fas fa-key"></i> Agent API key</h3>
+      <p style="font-size:0.88em; color:#cbd5e1;">Give this key to your VS Code Copilot agent so it can dump
+        knowledge into this project. <strong>Copy it now — it is shown only once.</strong></p>
+      <div class="keybox" id="keyBoxText"></div>
+      <div class="modal-actions">
+        <button class="btn btn-outline" onclick="copyKey()"><i class="fas fa-copy"></i> Copy</button>
+        <button class="btn" onclick="closeKey()">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let me = null;
+    let projects = [];
+    const entryCache = {};   // project_id -> entries[]
+    let editing = null;      // {projectId, entryId}
+    let lastKey = '';
+
+    // ── Auth ──────────────────────────────────────────────────────────
+    async function loadMe() {
+      const res = await fetch('/api/member/me');
+      const j = await res.json();
+      me = j.member;
+      renderAuthState();
+      if (me) loadProjects();
+    }
+    function renderAuthState() {
+      document.getElementById('signinCard').style.display = me ? 'none' : 'block';
+      document.getElementById('workspace').style.display = me ? 'block' : 'none';
+      document.getElementById('whoami').innerHTML = me ? ('Signed in as <strong>' + escapeHtml(me.name) + '</strong>') : '';
+      document.getElementById('signoutLink').style.display = me ? 'inline' : 'none';
+    }
+    async function doAuth() {
+      const name = document.getElementById('siName').value.trim();
+      const passcode = document.getElementById('siPass').value;
+      if (!name || !passcode) { alert('Enter your name and passcode.'); return; }
+      const res = await fetch('/api/member/auth', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, passcode })
+      });
+      if (!res.ok) { alert(await errText(res)); return; }
+      const j = await res.json();
+      me = j.member;
+      document.getElementById('siPass').value = '';
+      renderAuthState();
+      loadProjects();
+    }
+    async function signout() {
+      await fetch('/api/member/logout', { method: 'POST' });
+      me = null; projects = []; renderAuthState();
+    }
+
+    // ── Projects ──────────────────────────────────────────────────────
+    async function loadProjects() {
+      const res = await fetch('/api/projects');
+      if (!res.ok) { projects = []; renderProjects(); return; }
+      projects = await res.json();
+      renderProjects();
+    }
+    async function createProject() {
+      const name = document.getElementById('newProjectName').value.trim();
+      if (!name) { alert('Enter a project name.'); return; }
+      const res = await fetch('/api/projects', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name })
+      });
+      if (!res.ok) { alert(await errText(res)); return; }
+      document.getElementById('newProjectName').value = '';
+      loadProjects();
+    }
+    async function toggleProjectPublic(pid, isPublic) {
+      const res = await fetch('/api/projects/' + pid, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ public: isPublic })
+      });
+      if (!res.ok) { alert(await errText(res)); loadProjects(); return; }
+      loadProjects();
+    }
+    async function deleteProject(pid, name) {
+      if (!confirm('Delete project "' + name + '" and all its notes? This cannot be undone.')) return;
+      const res = await fetch('/api/projects/' + pid, { method: 'DELETE' });
+      if (!res.ok) { alert(await errText(res)); return; }
+      delete entryCache[pid];
+      loadProjects();
+    }
+    async function genKey(pid) {
+      const res = await fetch('/api/projects/' + pid + '/api-key', { method: 'POST' });
+      if (!res.ok) { alert(await errText(res)); return; }
+      const j = await res.json();
+      lastKey = j.api_key;
+      document.getElementById('keyBoxText').textContent = lastKey;
+      document.getElementById('keyModal').classList.add('open');
+    }
+
+    function renderProjects() {
+      const list = document.getElementById('projectList');
+      if (projects.length === 0) {
+        list.innerHTML = '<div class="empty empty-lg"><i class="fas fa-folder-open"></i>No projects yet. Create your first project above to start a knowledge base.</div>';
+        return;
+      }
+      list.innerHTML = projects.map(p => {
+        const openCls = p._open ? 'open' : '';
+        const pubCls = p.public ? 'pub' : '';
+        const visBadge = p.public
+          ? '<span class="badge badge-pub"><i class="fas fa-globe"></i> Public</span>'
+          : '<span class="badge badge-priv"><i class="fas fa-lock"></i> Private</span>';
+        return `
+          <div class="project ${openCls} ${pubCls}" data-pid="${p.id}">
+            <div class="project-head" onclick="toggleOpen('${p.id}')">
+              <div class="project-title">
+                <i class="fas fa-chevron-right chev"></i>
+                <div>
+                  <div class="project-name">${escapeHtml(p.name)}</div>
+                  <div class="project-meta">${p.entry_count} note${p.entry_count === 1 ? '' : 's'} · ${p.public_entry_count} shared</div>
+                </div>
+              </div>
+              <div class="project-actions" onclick="event.stopPropagation()">
+                ${visBadge}
+                <label class="switch" title="Share this whole project on the Team Board">
+                  <input type="checkbox" ${p.public ? 'checked' : ''} onchange="toggleProjectPublic('${p.id}', this.checked)">
+                  <span class="slider"></span> Public
+                </label>
+                <button class="btn btn-outline btn-sm" onclick="genKey('${p.id}')" title="Get an API key for your VS Code agent"><i class="fas fa-key"></i></button>
+                <button class="btn btn-danger btn-sm" onclick="deleteProject('${p.id}', '${escapeAttr(p.name)}')" title="Delete project"><i class="fas fa-trash"></i></button>
+              </div>
+            </div>
+            <div class="project-body">
+              <div class="kb-add">
+                <input type="text" id="t_${p.id}" placeholder="Note title">
+                <textarea id="c_${p.id}" placeholder="Write a knowledge note (markdown)..."></textarea>
+                <div class="row">
+                  <input type="text" id="tag_${p.id}" placeholder="Tags (comma separated)">
+                  <label class="switch" title="Share just this note with the team">
+                    <input type="checkbox" id="share_${p.id}"><span class="slider"></span> Share this note
+                  </label>
+                  <button class="btn btn-sm" onclick="addEntry('${p.id}')"><i class="fas fa-plus"></i> Add note</button>
+                </div>
+              </div>
+              <div id="entries_${p.id}"><div class="empty">Expand to load notes…</div></div>
+            </div>
+          </div>`;
+      }).join('');
+      // Re-render entries for any open projects
+      projects.filter(p => p._open).forEach(p => renderEntries(p.id));
+    }
+
+    function toggleOpen(pid) {
+      const p = projects.find(x => x.id === pid);
+      if (!p) return;
+      p._open = !p._open;
+      const el = document.querySelector('.project[data-pid="' + pid + '"]');
+      if (el) el.classList.toggle('open', p._open);
+      if (p._open) loadEntries(pid);
+    }
+
+    // ── Entries (knowledge base) ──────────────────────────────────────
+    async function loadEntries(pid) {
+      const res = await fetch('/api/braindump?mine=1&project_id=' + encodeURIComponent(pid));
+      entryCache[pid] = res.ok ? await res.json() : [];
+      renderEntries(pid);
+    }
+    function renderEntries(pid) {
+      const box = document.getElementById('entries_' + pid);
+      if (!box) return;
+      const items = entryCache[pid] || [];
+      if (items.length === 0) {
+        box.innerHTML = '<div class="empty"><i class="fas fa-inbox"></i>No notes yet in this knowledge base.</div>';
+        return;
+      }
+      box.innerHTML = items.map(e => {
+        const shared = e.visibility === 'team';
+        const shareBadge = shared
+          ? '<span class="badge badge-pub"><i class="fas fa-share-alt"></i> Shared</span>'
+          : '<span class="badge badge-priv"><i class="fas fa-lock"></i> Private</span>';
+        const agentBadge = e.source === 'agent' ? '<span class="badge badge-agent"><i class="fas fa-robot"></i> Agent</span>' : '';
+        const tagB = (e.tags || []).map(t => '<span class="badge badge-tag">#' + escapeHtml(t) + '</span>').join('');
+        const when = (e.created_at || '').slice(0, 16).replace('T', ' ');
+        return `
+          <div class="entry">
+            <div class="entry-top">
+              <div class="entry-title">${escapeHtml(e.title || 'Untitled')}</div>
+            </div>
+            <div class="entry-body">${escapeHtml(e.content || '')}</div>
+            <div class="entry-meta">by ${escapeHtml(e.author || 'Anonymous')} · ${when}</div>
+            <div class="badges">${shareBadge}${agentBadge}${tagB}</div>
+            <div class="entry-actions">
+              <label class="switch">
+                <input type="checkbox" ${shared ? 'checked' : ''} onchange="toggleEntryShare('${pid}','${e.id}', this.checked)">
+                <span class="slider"></span> Share with team
+              </label>
+              <button class="btn btn-outline btn-sm" onclick="openEdit('${pid}','${e.id}')"><i class="fas fa-edit"></i> Edit</button>
+              <button class="btn btn-danger btn-sm" onclick="deleteEntry('${pid}','${e.id}')"><i class="fas fa-trash"></i> Delete</button>
+            </div>
+          </div>`;
+      }).join('');
+    }
+    async function addEntry(pid) {
+      const title = document.getElementById('t_' + pid).value.trim();
+      const content = document.getElementById('c_' + pid).value.trim();
+      const tags = document.getElementById('tag_' + pid).value;
+      const share = document.getElementById('share_' + pid).checked;
+      if (!content) { alert('Write some content first.'); return; }
+      const res = await fetch('/api/braindump', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, content, tags, project_id: pid, visibility: share ? 'team' : 'private' })
+      });
+      if (!res.ok) { alert(await errText(res)); return; }
+      document.getElementById('t_' + pid).value = '';
+      document.getElementById('c_' + pid).value = '';
+      document.getElementById('tag_' + pid).value = '';
+      document.getElementById('share_' + pid).checked = false;
+      await loadEntries(pid);
+      loadProjects();
+    }
+    async function toggleEntryShare(pid, id, share) {
+      const res = await fetch('/api/braindump/' + id, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ visibility: share ? 'team' : 'private' })
+      });
+      if (!res.ok) { alert(await errText(res)); await loadEntries(pid); return; }
+      await loadEntries(pid);
+      loadProjects();
+    }
+    async function deleteEntry(pid, id) {
+      if (!confirm('Delete this note?')) return;
+      const res = await fetch('/api/braindump/' + id, { method: 'DELETE' });
+      if (!res.ok) { alert(await errText(res)); return; }
+      await loadEntries(pid);
+      loadProjects();
+    }
+
+    // ── Edit modal ────────────────────────────────────────────────────
+    function openEdit(pid, id) {
+      const e = (entryCache[pid] || []).find(x => x.id === id);
+      if (!e) return;
+      editing = { projectId: pid, entryId: id };
+      document.getElementById('editTitle').value = e.title || '';
+      document.getElementById('editContent').value = e.content || '';
+      document.getElementById('editTags').value = (e.tags || []).join(', ');
+      document.getElementById('editModal').classList.add('open');
+    }
+    function closeEdit() { editing = null; document.getElementById('editModal').classList.remove('open'); }
+    async function saveEdit() {
+      if (!editing) return;
+      const body = {
+        title: document.getElementById('editTitle').value.trim(),
+        content: document.getElementById('editContent').value.trim(),
+        tags: document.getElementById('editTags').value,
+      };
+      const res = await fetch('/api/braindump/' + editing.entryId, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      if (!res.ok) { alert(await errText(res)); return; }
+      const pid = editing.projectId;
+      closeEdit();
+      await loadEntries(pid);
+    }
+
+    // ── API key modal ─────────────────────────────────────────────────
+    function closeKey() { document.getElementById('keyModal').classList.remove('open'); lastKey = ''; }
+    async function copyKey() {
+      const ok = await copyTextToClipboard(lastKey);
+      alert(ok ? 'Copied to clipboard.' : 'Copy failed — select and copy manually.');
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────
+    async function errText(res) { try { const j = await res.json(); return j.error || ('Error ' + res.status); } catch (_) { return 'Error ' + res.status; } }
+    function escapeHtml(s) { return (s || '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+    function escapeAttr(s) { return escapeHtml(s).replace(/'/g, '&#39;'); }
+    async function copyTextToClipboard(text) {
+      try { await navigator.clipboard.writeText(text); return true; }
+      catch (_) {
+        try {
+          const ta = document.createElement('textarea');
+          ta.value = text; ta.setAttribute('readonly', '');
+          ta.style.position = 'fixed'; ta.style.top = '0'; ta.style.left = '-9999px';
+          document.body.appendChild(ta); ta.focus(); ta.select(); ta.setSelectionRange(0, text.length);
+          const ok = document.execCommand('copy'); document.body.removeChild(ta); return ok;
+        } catch (_e) { return false; }
+      }
+    }
+
+    // Enter-to-submit on sign-in
+    document.getElementById('siPass').addEventListener('keydown', e => { if (e.key === 'Enter') doAuth(); });
+
+    loadMe();
+  </script>
+</body>
+</html>

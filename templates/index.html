@@ -262,6 +262,7 @@
       align-items: center;
       justify-content: center;
       z-index: 2000;
+      padding: 16px;
     }
     .modal-box {
       background: #1a2235;
@@ -269,6 +270,9 @@
       border-radius: 16px;
       padding: 24px;
       width: 360px;
+      max-width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
       box-shadow: 0 16px 48px rgba(0,0,0,0.5);
       text-align: center;
       color: #f1f5f9;
@@ -344,6 +348,9 @@
     <button class="action-btn" data-cmd="/summarize ">📝 Summarize</button>
     <button id="uploadBtn" class="action-btn">📁 Upload</button>
     <button onclick="window.location='/braindump'" class="action-btn">🧠 Brain Dump</button>
+    <button onclick="window.location='/workspace'" class="action-btn">🗂️ My Workspace</button>
+    <button onclick="window.location='/inventory'" class="action-btn">📦 Inventory</button>
+    <button onclick="window.location='/admin/api-keys'" class="action-btn">🔑 API Keys</button>
   </div>
 
   <!-- Hidden file input -->

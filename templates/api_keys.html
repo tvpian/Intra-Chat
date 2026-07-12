@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>API Keys – Intra-Chat</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', 'Segoe UI', sans-serif;
+      background: #111827;
+      background-image:
+        radial-gradient(ellipse at 20% 50%, rgba(0,200,210,0.12) 0%, transparent 60%),
+        radial-gradient(ellipse at 80% 20%, rgba(20,70,130,0.22) 0%, transparent 50%);
+      color: #f1f5f9;
+      min-height: 100vh;
+    }
+    .header {
+      background: rgba(26,34,53,0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(34,245,255,0.2);
+      padding: 15px 25px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .header h1 { color: #22f5ff; font-size: 1.3em; font-weight: 700; text-shadow: 0 0 20px rgba(34,245,255,0.25); }
+    .header h1 i { margin-right: 8px; }
+    .back-link { color: #22f5ff; text-decoration: none; font-size: 0.9em; font-weight: 500; }
+    .back-link:hover { text-decoration: underline; }
+
+    .wrap { max-width: 800px; margin: 20px auto; padding: 0 25px; }
+    p.intro { color: #94a3b8; font-size: 0.9em; margin-bottom: 20px; line-height: 1.5; }
+
+    .form-card {
+      background: rgba(26,34,53,0.9);
+      border: 1px solid rgba(34,245,255,0.2);
+      border-radius: 12px;
+      padding: 20px;
+      backdrop-filter: blur(8px);
+      margin-bottom: 24px;
+    }
+    .form-card h2 { color: #22f5ff; font-size: 1em; margin-bottom: 12px; font-weight: 600; }
+    .form-row { margin-bottom: 12px; }
+    .form-row label { display: block; font-size: 0.8em; color: #94a3b8; margin-bottom: 4px; font-weight: 500; }
+    .form-row input {
+      width: 100%;
+      padding: 10px 14px;
+      background: rgba(20,28,45,0.9);
+      border: 1px solid rgba(34,245,255,0.2);
+      border-radius: 8px;
+      color: #f8fafc;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.95em;
+    }
+    .form-row input:focus { outline: none; border-color: rgba(34,245,255,0.5); }
+    .form-actions { display: flex; gap: 8px; justify-content: flex-end; }
+
+    .btn {
+      padding: 9px 18px;
+      background: linear-gradient(135deg, #00c8d2 0%, #00a0a8 100%);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.9em;
+      font-family: 'Inter', sans-serif;
+      transition: all 0.2s;
+    }
+    .btn:hover { background: linear-gradient(135deg, #00dce6 0%, #00b5be 100%); transform: translateY(-1px); }
+    .btn-outline { background: transparent; border: 1px solid rgba(34,245,255,0.4); color: #22f5ff; }
+    .btn-outline:hover { background: rgba(0,200,210,0.15); transform: translateY(-1px); }
+    .btn-danger { background: linear-gradient(135deg, #e64c4c 0%, #b83232 100%); }
+    .btn-danger:hover { background: linear-gradient(135deg, #f05c5c 0%, #c83a3a 100%); }
+
+    .new-key-box {
+      background: rgba(0,200,120,0.1);
+      border: 1px solid rgba(0,220,140,0.4);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 24px;
+      display: none;
+    }
+    .new-key-box.open { display: block; }
+    .new-key-box h3 { color: #4ade80; font-size: 0.95em; margin-bottom: 8px; }
+    .new-key-box .key-value {
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      background: #0d1120;
+      border: 1px solid rgba(74,222,128,0.3);
+      border-radius: 8px;
+      padding: 10px 14px;
+      word-break: break-all;
+      font-size: 0.9em;
+      margin: 8px 0 12px;
+    }
+    .new-key-box .warn { font-size: 0.8em; color: #fca5a5; }
+
+    table { width: 100%; border-collapse: collapse; }
+    th, td {
+      text-align: left;
+      padding: 10px 12px;
+      border-bottom: 1px solid rgba(34,245,255,0.1);
+      font-size: 0.85em;
+    }
+    th { color: #94a3b8; font-weight: 600; text-transform: uppercase; font-size: 0.75em; letter-spacing: 0.05em; }
+    td.revoked { color: #64748b; text-decoration: line-through; }
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 0.75em;
+      font-weight: 600;
+    }
+    .badge.active { background: rgba(74,222,128,0.15); color: #4ade80; }
+    .badge.revoked { background: rgba(148,163,184,0.15); color: #94a3b8; }
+
+    .empty-state { text-align: center; padding: 40px 20px; color: #64748b; }
+    .table-wrap { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+    /* ——— Responsive / mobile ——— */
+    @media (max-width: 640px) {
+      .header { flex-direction: column; align-items: flex-start; gap: 8px; padding: 12px 16px; }
+      .wrap { padding: 0 16px; }
+      .form-actions { flex-direction: column; align-items: stretch; }
+      .form-actions .btn { width: 100%; }
+      table { min-width: 620px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <h1><i class="fas fa-key"></i> API Keys</h1>
+    <a href="/" class="back-link"><i class="fas fa-arrow-left"></i> Back to Chat</a>
+  </div>
+
+  <div class="wrap">
+    <p class="intro">
+      API keys let a teammate's VS Code Copilot agent (or the teammate's own browser)
+      authenticate to the <a href="/braindump" style="color:#22f5ff;">Brain Dump</a> and
+      <a href="/inventory" style="color:#22f5ff;">Inventory</a> APIs without the shared login.
+      Each key is bound to one project and is the only proof of ownership for that
+      project's <strong>private</strong> knowledge base — anyone holding the key can
+      read, write, and manage that project's entries. Keys are shown once at creation;
+      only a hash is stored on the server.
+    </p>
+
+    <div class="form-card">
+      <h2><i class="fas fa-plus"></i> Create a new key</h2>
+      <div class="form-row">
+        <label>Project ID</label>
+        <input type="text" id="newProjectId" placeholder="e.g. project-alpha" />
+      </div>
+      <div class="form-row">
+        <label>Label (optional)</label>
+        <input type="text" id="newLabel" placeholder="e.g. Alice's robotics project" />
+      </div>
+      <div class="form-actions">
+        <button class="btn" onclick="createKey()"><i class="fas fa-key"></i> Generate Key</button>
+      </div>
+    </div>
+
+    <div class="new-key-box" id="newKeyBox">
+      <h3><i class="fas fa-check-circle"></i> Key created — copy it now</h3>
+      <div class="key-value" id="newKeyValue"></div>
+      <div class="form-actions" style="justify-content:flex-start;">
+        <button class="btn" id="newKeyCopyBtn" onclick="copyNewKey()"><i class="fas fa-copy"></i> Copy</button>
+      </div>
+      <p class="warn">This is the only time this key will be shown. Store it safely (e.g. in the teammate's VS Code settings or a password manager).</p>
+    </div>
+
+    <div class="form-card">
+      <h2><i class="fas fa-list"></i> Existing keys</h2>
+      <div class="table-wrap">
+      <table id="keysTable">
+        <thead>
+          <tr><th>Project</th><th>Label</th><th>Created</th><th>Last used</th><th>Status</th><th></th></tr>
+        </thead>
+        <tbody id="keysTableBody"></tbody>
+      </table>
+      </div>
+      <div class="empty-state" id="keysEmpty" style="display:none;">No API keys yet.</div>
+    </div>
+  </div>
+
+  <script>
+    async function copyTextToClipboard(text) {
+      try { await navigator.clipboard.writeText(text); return true; }
+      catch (_) {
+        try {
+          const ta = document.createElement('textarea');
+          ta.value = text; ta.setAttribute('readonly', '');
+          ta.style.position = 'fixed'; ta.style.top = '0'; ta.style.left = '-9999px';
+          document.body.appendChild(ta); ta.focus(); ta.select();
+          ta.setSelectionRange(0, text.length);
+          const ok = document.execCommand('copy');
+          document.body.removeChild(ta);
+          return ok;
+        } catch (_e) { return false; }
+      }
+    }
+
+    let lastCreatedKey = '';
+
+    function esc(s) {
+      if (!s) return '';
+      const d = document.createElement('div');
+      d.textContent = s;
+      return d.innerHTML;
+    }
+
+    function fmtDate(iso) {
+      if (!iso) return '—';
+      return new Date(iso).toLocaleString();
+    }
+
+    async function loadKeys() {
+      const res = await fetch('/api/keys');
+      const keys = await res.json();
+      const tbody = document.getElementById('keysTableBody');
+      const empty = document.getElementById('keysEmpty');
+      if (!keys.length) {
+        tbody.innerHTML = '';
+        empty.style.display = 'block';
+        return;
+      }
+      empty.style.display = 'none';
+      tbody.innerHTML = keys.map(k => {
+        const revoked = !!k.revoked_at;
+        return `
+          <tr>
+            <td class="${revoked ? 'revoked' : ''}">${esc(k.project_id)}</td>
+            <td class="${revoked ? 'revoked' : ''}">${esc(k.label)}</td>
+            <td>${fmtDate(k.created_at)}</td>
+            <td>${fmtDate(k.last_used_at)}</td>
+            <td><span class="badge ${revoked ? 'revoked' : 'active'}">${revoked ? 'Revoked' : 'Active'}</span></td>
+            <td>${revoked ? '' : `<button class="btn btn-danger" onclick="revokeKey('${k.id}')"><i class="fas fa-ban"></i> Revoke</button>`}</td>
+          </tr>`;
+      }).join('');
+    }
+
+    async function createKey() {
+      const project_id = document.getElementById('newProjectId').value.trim();
+      const label = document.getElementById('newLabel').value.trim();
+      if (!project_id) { alert('Project ID is required.'); return; }
+      const res = await fetch('/api/keys', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ project_id, label }),
+      });
+      const data = await res.json();
+      if (!res.ok) { alert(data.error || 'Could not create key.'); return; }
+      lastCreatedKey = data.api_key;
+      document.getElementById('newKeyValue').textContent = data.api_key;
+      document.getElementById('newKeyBox').classList.add('open');
+      document.getElementById('newProjectId').value = '';
+      document.getElementById('newLabel').value = '';
+      loadKeys();
+    }
+
+    async function copyNewKey() {
+      const ok = await copyTextToClipboard(lastCreatedKey);
+      const btn = document.getElementById('newKeyCopyBtn');
+      btn.innerHTML = ok ? '<i class="fas fa-check"></i> Copied!' : '<i class="fas fa-exclamation-triangle"></i> Copy failed — select manually';
+      setTimeout(() => { btn.innerHTML = '<i class="fas fa-copy"></i> Copy'; }, 2000);
+    }
+
+    async function revokeKey(id) {
+      if (!confirm('Revoke this key? Anything using it (agent or browser) will lose access immediately.')) return;
+      await fetch('/api/keys/' + id + '/revoke', { method: 'POST' });
+      loadKeys();
+    }
+
+    loadKeys();
+  </script>
+</body>
+</html>

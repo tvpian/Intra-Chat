@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lab Equipment – Inventory</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', 'Segoe UI', sans-serif;
+      background: #111827;
+      background-image:
+        radial-gradient(ellipse at 20% 50%, rgba(0,200,210,0.12) 0%, transparent 60%),
+        radial-gradient(ellipse at 80% 20%, rgba(20,70,130,0.22) 0%, transparent 50%);
+      color: #f1f5f9;
+      min-height: 100vh;
+    }
+    .header {
+      background: rgba(26,34,53,0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(34,245,255,0.2);
+      padding: 15px 25px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .header h1 { color: #22f5ff; font-size: 1.3em; font-weight: 700; text-shadow: 0 0 20px rgba(34,245,255,0.25); }
+    .header h1 i { margin-right: 8px; }
+    .back-link { color: #22f5ff; text-decoration: none; font-size: 0.9em; font-weight: 500; }
+    .back-link:hover { text-decoration: underline; }
+
+    .toolbar {
+      padding: 12px 25px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      background: rgba(26,34,53,0.6);
+      border-bottom: 1px solid rgba(34,245,255,0.1);
+    }
+    .toolbar input, .toolbar select {
+      padding: 9px 14px;
+      background: rgba(20,28,45,0.9);
+      border: 1px solid rgba(34,245,255,0.3);
+      border-radius: 8px;
+      color: #f8fafc;
+      font-size: 0.9em;
+      font-family: 'Inter', sans-serif;
+    }
+    .toolbar input:focus, .toolbar select:focus { outline: none; border-color: rgba(34,245,255,0.6); }
+    .toolbar input::placeholder { color: #94a3b8; }
+
+    .btn {
+      padding: 9px 18px;
+      background: linear-gradient(135deg, #00c8d2 0%, #00a0a8 100%);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.9em;
+      font-family: 'Inter', sans-serif;
+      transition: all 0.2s;
+    }
+    .btn:hover { background: linear-gradient(135deg, #00dce6 0%, #00b5be 100%); transform: translateY(-1px); }
+    .btn-outline { background: transparent; border: 1px solid rgba(34,245,255,0.4); color: #22f5ff; }
+    .btn-outline:hover { background: rgba(0,200,210,0.15); transform: translateY(-1px); }
+    .btn-sm { padding: 5px 10px; font-size: 0.8em; }
+
+    .new-entry { max-width: 900px; margin: 20px auto; padding: 0 25px; display: none; }
+    .new-entry.open { display: block; }
+    .form-card {
+      background: rgba(26,34,53,0.9);
+      border: 1px solid rgba(34,245,255,0.2);
+      border-radius: 12px;
+      padding: 20px;
+      backdrop-filter: blur(8px);
+    }
+    .form-card h2 { color: #22f5ff; font-size: 1em; margin-bottom: 12px; font-weight: 600; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .form-row label { display: block; font-size: 0.8em; color: #94a3b8; margin-bottom: 4px; font-weight: 500; }
+    .form-row input, .form-row select, .form-row textarea {
+      width: 100%;
+      padding: 10px 14px;
+      background: rgba(20,28,45,0.9);
+      border: 1px solid rgba(34,245,255,0.2);
+      border-radius: 8px;
+      color: #f8fafc;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.95em;
+    }
+    .form-row input:focus, .form-row select:focus, .form-row textarea:focus { outline: none; border-color: rgba(34,245,255,0.5); }
+    .form-row .hint { font-size: 0.72em; color: #64748b; margin-top: 3px; }
+    .form-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 12px; }
+
+    .grid { max-width: 1100px; margin: 20px auto; padding: 0 25px; display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+    .item-card {
+      background: rgba(26,34,53,0.9);
+      border: 1px solid rgba(34,245,255,0.15);
+      border-radius: 12px;
+      padding: 16px;
+      backdrop-filter: blur(8px);
+      position: relative;
+    }
+    .item-card.in_use { border-color: rgba(250,180,50,0.5); }
+    .item-card.borrowed { border-color: rgba(120,170,255,0.5); }
+    .item-card.broken { border-color: rgba(230,130,80,0.5); }
+    .item-card.retired { opacity: 0.55; }
+    .item-card.lost { border-color: rgba(230,80,80,0.5); opacity: 0.7; }
+    .item-name { font-weight: 700; font-size: 1.05em; margin-bottom: 2px; }
+    .asset-tag { font-size: 0.75em; color: #22f5ff; font-family: 'SF Mono','Fira Code',monospace; margin-bottom: 8px; }
+    .item-meta { font-size: 0.8em; color: #94a3b8; margin-bottom: 8px; display: flex; flex-wrap: wrap; gap: 8px; }
+    .item-meta span i { margin-right: 3px; color: #22f5ff; }
+    .item-notes { font-size: 0.85em; color: #cbd5e1; margin-bottom: 10px; white-space: pre-wrap; }
+    .status-badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 0.8em;
+      margin-bottom: 8px;
+    }
+    .status-badge.available { background: rgba(74,222,128,0.15); color: #4ade80; }
+    .status-badge.in_use { background: rgba(250,180,50,0.15); color: #fab432; }
+    .status-badge.borrowed { background: rgba(120,170,255,0.18); color: #7aaaff; }
+    .status-badge.broken { background: rgba(230,130,80,0.18); color: #f0925a; }
+    .status-badge.retired { background: rgba(148,163,184,0.15); color: #94a3b8; }
+    .status-badge.lost { background: rgba(230,80,80,0.18); color: #e65050; }
+    .holder-line { font-size: 0.8em; color: #fab432; margin-bottom: 8px; }
+    .holder-line i { margin-right: 4px; }
+    .item-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 10px; }
+    .tag { background: rgba(0,200,210,0.12); color: #22f5ff; border-radius: 10px; padding: 2px 9px; font-size: 0.75em; }
+    .item-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+
+    .stats-bar {
+      max-width: 1100px; margin: 12px auto 0; padding: 0 25px;
+      display: flex; gap: 10px; flex-wrap: wrap;
+    }
+    .stat-pill {
+      background: rgba(26,34,53,0.8); border: 1px solid rgba(34,245,255,0.12);
+      border-radius: 10px; padding: 6px 14px; font-size: 0.82em; color: #cbd5e1;
+    }
+    .stat-pill b { color: #22f5ff; }
+    .stat-pill.available b { color: #4ade80; }
+    .stat-pill.in_use b { color: #fab432; }
+    .stat-pill.borrowed b { color: #7aaaff; }
+    .stat-pill.broken b { color: #f0925a; }
+    .stat-pill.lost b { color: #e65050; }
+
+    .empty-state { text-align: center; padding: 60px 20px; color: #64748b; grid-column: 1 / -1; }
+    .empty-state i { font-size: 2.5em; margin-bottom: 10px; display: block; color: #334155; }
+
+    .modal-overlay {
+      display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.65); backdrop-filter: blur(4px); z-index: 200;
+      align-items: center; justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal-box {
+      background: #1a2235; border: 1px solid rgba(34,245,255,0.25); border-radius: 16px;
+      padding: 24px; width: 90%; max-width: 500px; max-height: 80vh; overflow-y: auto;
+      box-shadow: 0 16px 48px rgba(0,0,0,0.5);
+    }
+    .modal-box h2 { color: #22f5ff; margin-bottom: 12px; font-size: 1em; font-weight: 600; }
+    .modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    @media (max-width: 600px) {
+      .toolbar { padding: 10px 12px; }
+      .grid, .new-entry { padding: 0 12px; }
+      .header { padding: 12px; }
+      .form-grid, .modal-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <h1><i class="fas fa-microchip"></i> Lab Equipment</h1>
+    <a href="/" class="back-link"><i class="fas fa-arrow-left"></i> Back to Chat</a>
+  </div>
+
+  <div class="toolbar">
+    <input type="text" id="searchInput" placeholder="Search name, tag, serial, holder..." style="flex:1;min-width:160px;" />
+    <select id="categoryFilter"><option value="">All Categories</option></select>
+    <select id="statusFilter">
+      <option value="">All Statuses</option>
+      <option value="available">Available</option>
+      <option value="in_use">In Use</option>
+      <option value="borrowed">Borrowed</option>
+      <option value="lost">Lost</option>
+      <option value="retired">Retired</option>
+      <option value="broken">Broken</option>
+    </select>
+    <input type="text" id="locationFilter" placeholder="Location" style="max-width:140px;" />
+    <button class="btn" onclick="toggleNewItem()"><i class="fas fa-plus"></i> Add Equipment</button>
+    <button class="btn btn-outline" onclick="openExportModal()"><i class="fas fa-file-export"></i> Export</button>
+  </div>
+
+  <!-- Teammate roster shared by every "in charge" picker -->
+  <datalist id="rosterList"></datalist>
+
+  <div class="new-entry" id="newItemForm">
+    <div class="form-card">
+      <h2><i class="fas fa-microchip"></i> Add a piece of equipment</h2>
+      <div class="form-grid">
+        <div class="form-row">
+          <label>Name *</label>
+          <input type="text" id="itemName" placeholder="e.g. RPLidar A1" />
+        </div>
+        <div class="form-row">
+          <label>Asset Tag</label>
+          <input type="text" id="itemAssetTag" placeholder="Auto-generated if blank" />
+          <div class="hint" id="assetTagHint">Leave blank for a printable tag (lab no + category + order)</div>
+        </div>
+        <div class="form-row">
+          <label>Category</label>
+          <select id="itemCategory"></select>
+        </div>
+        <div class="form-row">
+          <label>Status</label>
+          <select id="itemStatus">
+            <option value="available">Available</option>
+            <option value="in_use">In Use</option>
+            <option value="borrowed">Borrowed</option>
+            <option value="lost">Lost</option>
+            <option value="retired">Retired</option>
+            <option value="broken">Broken</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label>Manufacturer</label>
+          <input type="text" id="itemManufacturer" placeholder="e.g. Slamtec" />
+        </div>
+        <div class="form-row">
+          <label>Model Number</label>
+          <input type="text" id="itemModel" placeholder="e.g. A1M8" />
+        </div>
+        <div class="form-row">
+          <label>Serial Number</label>
+          <input type="text" id="itemSerial" placeholder="e.g. SN-12345" />
+        </div>
+        <div class="form-row">
+          <label>Location</label>
+          <input type="text" id="itemLocation" placeholder="e.g. Shelf B3, Lab 2" />
+        </div>
+        <div class="form-row" id="newHolderRow" style="display:none;">
+          <label>In charge</label>
+          <input type="text" id="itemHolder" list="rosterList" placeholder="Pick a teammate or type a name" />
+          <div class="hint">Who's using it right now</div>
+        </div>
+        <div class="form-row" style="grid-column: 1 / -1;">
+          <label>Tags</label>
+          <input type="text" id="itemTags" placeholder="ros, fragile, calibrated (comma separated)" />
+        </div>
+        <div class="form-row" style="grid-column: 1 / -1;">
+          <label>Notes</label>
+          <textarea id="itemNotes" rows="3" placeholder="Condition, accessories, quirks..."></textarea>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-outline" onclick="toggleNewItem()">Cancel</button>
+        <button class="btn" onclick="submitItem()"><i class="fas fa-plus"></i> Add</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="stats-bar" id="statsBar"></div>
+  <div class="grid" id="itemsGrid"></div>
+
+  <!-- Edit modal -->
+  <div class="modal-overlay" id="editModal">
+    <div class="modal-box">
+      <h2><i class="fas fa-edit"></i> Edit Equipment</h2>
+      <input type="hidden" id="editId" />
+      <div class="modal-grid">
+        <div class="form-row"><label>Name</label><input type="text" id="editName" /></div>
+        <div class="form-row"><label>Asset Tag</label><input type="text" id="editAssetTag" /></div>
+        <div class="form-row"><label>Category</label><select id="editCategory"></select></div>
+        <div class="form-row"><label>Status</label>
+          <select id="editStatus">
+            <option value="available">Available</option>
+            <option value="in_use">In Use</option>
+            <option value="borrowed">Borrowed</option>
+            <option value="lost">Lost</option>
+            <option value="retired">Retired</option>
+            <option value="broken">Broken</option>
+          </select>
+        </div>
+        <div class="form-row"><label>Manufacturer</label><input type="text" id="editManufacturer" /></div>
+        <div class="form-row"><label>Model Number</label><input type="text" id="editModel" /></div>
+        <div class="form-row"><label>Serial Number</label><input type="text" id="editSerial" /></div>
+        <div class="form-row"><label>Location</label><input type="text" id="editLocation" /></div>
+        <div class="form-row" id="editHolderRow" style="display:none;"><label>In charge</label><input type="text" id="editHolder" list="rosterList" placeholder="Pick a teammate or type a name" /></div>
+      </div>
+      <div class="form-row" style="margin-top:12px;"><label>Tags</label><input type="text" id="editTags" /></div>
+      <div class="form-row"><label>Notes</label><textarea id="editNotes" rows="3"></textarea></div>
+      <div class="form-actions">
+        <button class="btn btn-outline" onclick="closeEditModal()">Cancel</button>
+        <button class="btn" onclick="saveEdit()"><i class="fas fa-save"></i> Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Check out modal -->
+  <div class="modal-overlay" id="checkoutModal">
+    <div class="modal-box">
+      <h2><i class="fas fa-arrow-up-from-bracket"></i> Assign / Take Out</h2>
+      <input type="hidden" id="checkoutItemId" />
+      <div class="form-row"><label>In charge *</label><input type="text" id="checkoutHolder" list="rosterList" placeholder="Pick a teammate or type a name" /></div>
+      <div class="form-row"><label>How</label>
+        <select id="checkoutStatus">
+          <option value="in_use">In Use (kept in the lab)</option>
+          <option value="borrowed">Borrowed (taken away)</option>
+        </select>
+      </div>
+      <div class="form-row"><label>Note (optional)</label><input type="text" id="checkoutNote" placeholder="e.g. for field test until Friday" /></div>
+      <div class="form-actions">
+        <button class="btn btn-outline" onclick="closeCheckoutModal()">Cancel</button>
+        <button class="btn" onclick="submitCheckout()"><i class="fas fa-check"></i> Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Check in modal -->
+  <div class="modal-overlay" id="checkinModal">
+    <div class="modal-box">
+      <h2><i class="fas fa-arrow-down-to-bracket"></i> Return</h2>
+      <input type="hidden" id="checkinItemId" />
+      <div class="form-row"><label>Your name (optional)</label><input type="text" id="checkinUser" list="rosterList" placeholder="Who's returning it?" /></div>
+      <div class="form-row"><label>Return to location (optional)</label><input type="text" id="checkinLocation" placeholder="Leave blank to keep current" /></div>
+      <div class="form-actions">
+        <button class="btn btn-outline" onclick="closeCheckinModal()">Cancel</button>
+        <button class="btn" onclick="submitCheckin()"><i class="fas fa-check"></i> Return</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- History modal -->
+  <div class="modal-overlay" id="historyModal">
+    <div class="modal-box">
+      <h2><i class="fas fa-clock-rotate-left"></i> History</h2>
+      <div id="historyContent" style="font-size:0.85em;color:#cbd5e1;"></div>
+      <div class="form-actions">
+        <button class="btn btn-outline" onclick="closeHistoryModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Export modal -->
+  <div class="modal-overlay" id="exportModal">
+    <div class="modal-box">
+      <h2><i class="fas fa-file-export"></i> Export Inventory</h2>
+      <textarea id="exportContent" readonly style="width:100%;min-height:250px;max-height:50vh;padding:12px;background:#0d1120;border:1px solid rgba(34,245,255,0.2);border-radius:8px;color:#e2e8f0;font-family:'SF Mono','Fira Code',monospace;font-size:0.85em;resize:vertical;"></textarea>
+      <div class="form-actions">
+        <button class="btn btn-outline" onclick="closeExportModal()">Close</button>
+        <button class="btn btn-outline" onclick="downloadCsv()"><i class="fas fa-download"></i> Download .csv</button>
+        <button class="btn btn-outline" onclick="downloadMd()"><i class="fas fa-download"></i> Download .md</button>
+        <button class="btn" id="exportCopyBtn" onclick="copyExport()"><i class="fas fa-copy"></i> Copy All</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const CATEGORIES = {{ categories | tojson }};
+    const CATEGORY_CODES = {{ category_codes | tojson }};
+    const ASSET_TAG_PREFIX = {{ asset_tag_prefix | tojson }};
+    const STATUS_LABELS = {
+      available: 'Available', in_use: 'In Use', borrowed: 'Borrowed',
+      lost: 'Lost', retired: 'Retired', broken: 'Broken',
+    };
+    const IN_USE_STATUSES = ['in_use', 'borrowed'];
+    let allItems = [];
+    const savedUser = localStorage.getItem('inventory_user') || '';
+    if (savedUser) {
+      const co = document.getElementById('checkoutHolder'); if (co) co.value = savedUser;
+      const ci = document.getElementById('checkinUser'); if (ci) ci.value = savedUser;
+    }
+
+    async function copyTextToClipboard(text) {
+      try { await navigator.clipboard.writeText(text); return true; }
+      catch (_) {
+        try {
+          const ta = document.createElement('textarea');
+          ta.value = text; ta.setAttribute('readonly', '');
+          ta.style.position = 'fixed'; ta.style.top = '0'; ta.style.left = '-9999px';
+          document.body.appendChild(ta); ta.focus(); ta.select();
+          ta.setSelectionRange(0, text.length);
+          const ok = document.execCommand('copy');
+          document.body.removeChild(ta);
+          return ok;
+        } catch (_e) { return false; }
+      }
+    }
+
+    function esc(s) {
+      if (!s) return '';
+      const d = document.createElement('div');
+      d.textContent = s;
+      return d.innerHTML;
+    }
+
+    function populateCategorySelects() {
+      const opts = CATEGORIES.map(c => `<option value="${c}">${c}</option>`).join('');
+      document.getElementById('itemCategory').innerHTML = opts;
+      document.getElementById('editCategory').innerHTML = opts;
+      document.getElementById('categoryFilter').innerHTML = '<option value="">All Categories</option>' + opts;
+    }
+
+    function updateAssetTagHint() {
+      const cat = document.getElementById('itemCategory').value;
+      const code = CATEGORY_CODES[cat] || 'MSC';
+      document.getElementById('assetTagHint').textContent =
+        `Leave blank for an auto tag like ${ASSET_TAG_PREFIX}-${code}-0003 (lab no + category + order)`;
+    }
+
+    async function loadRoster() {
+      try {
+        const res = await fetch('/api/inventory/roster');
+        const names = await res.json();
+        document.getElementById('rosterList').innerHTML =
+          names.map(n => `<option value="${esc(n)}"></option>`).join('');
+      } catch (_) { /* datalist just stays empty; free-text still works */ }
+    }
+
+    async function fetchItems(params = '') {
+      const res = await fetch('/api/inventory' + params);
+      allItems = await res.json();
+      renderItems();
+    }
+
+    function renderStats() {
+      const counts = { available: 0, in_use: 0, borrowed: 0, lost: 0, retired: 0, broken: 0 };
+      allItems.forEach(i => { counts[i.status] = (counts[i.status] || 0) + 1; });
+      document.getElementById('statsBar').innerHTML = `
+        <div class="stat-pill"><b>${allItems.length}</b> total</div>
+        <div class="stat-pill available"><b>${counts.available}</b> available</div>
+        ${counts.in_use ? `<div class="stat-pill in_use"><b>${counts.in_use}</b> in use</div>` : ''}
+        ${counts.borrowed ? `<div class="stat-pill borrowed"><b>${counts.borrowed}</b> borrowed</div>` : ''}
+        ${counts.broken ? `<div class="stat-pill broken"><b>${counts.broken}</b> broken</div>` : ''}
+        ${counts.retired ? `<div class="stat-pill"><b>${counts.retired}</b> retired</div>` : ''}
+        ${counts.lost ? `<div class="stat-pill lost"><b>${counts.lost}</b> lost</div>` : ''}
+      `;
+    }
+
+    function renderItems() {
+      renderStats();
+      const grid = document.getElementById('itemsGrid');
+      if (allItems.length === 0) {
+        grid.innerHTML = `<div class="empty-state"><i class="fas fa-box-open"></i><p>No equipment logged yet. Add the first piece!</p></div>`;
+        return;
+      }
+      grid.innerHTML = allItems.map(i => {
+        const tags = (i.tags || []).map(t => `<span class="tag">#${esc(t)}</span>`).join('');
+        const specs = [
+          i.manufacturer ? `<span><i class="fas fa-industry"></i> ${esc(i.manufacturer)}</span>` : '',
+          i.model_number ? `<span><i class="fas fa-barcode"></i> ${esc(i.model_number)}</span>` : '',
+          i.serial_number ? `<span><i class="fas fa-hashtag"></i> ${esc(i.serial_number)}</span>` : '',
+          i.location ? `<span><i class="fas fa-map-marker-alt"></i> ${esc(i.location)}</span>` : '',
+        ].filter(Boolean).join('');
+        const inCharge = i.in_charge || i.holder || '';
+        const isOut = IN_USE_STATUSES.includes(i.status);
+        const canCheckout = i.status === 'available';
+        return `
+          <div class="item-card ${i.status}">
+            <div class="item-name">${esc(i.name)}</div>
+            ${i.asset_tag ? `<div class="asset-tag">${esc(i.asset_tag)}</div>` : ''}
+            <div class="status-badge ${i.status}">${STATUS_LABELS[i.status] || i.status}</div>
+            <div class="item-meta"><span><i class="fas fa-tag"></i> ${esc(i.category)}</span>${specs}</div>
+            ${isOut && inCharge ? `<div class="holder-line"><i class="fas fa-user-clock"></i> In charge: ${esc(inCharge)}</div>` : ''}
+            ${i.notes ? `<div class="item-notes">${esc(i.notes)}</div>` : ''}
+            ${tags ? `<div class="item-tags">${tags}</div>` : ''}
+            <div class="item-actions">
+              ${canCheckout ? `<button class="btn btn-outline btn-sm" onclick="openCheckoutModal('${i.id}')"><i class="fas fa-arrow-up-from-bracket"></i> Take out</button>` : ''}
+              ${isOut ? `<button class="btn btn-outline btn-sm" onclick="openCheckinModal('${i.id}')"><i class="fas fa-arrow-down-to-bracket"></i> Return</button>` : ''}
+              <button class="btn btn-outline btn-sm" onclick="openHistoryModal('${i.id}')"><i class="fas fa-clock-rotate-left"></i></button>
+              <button class="btn btn-outline btn-sm" onclick="openEditModal('${i.id}')"><i class="fas fa-edit"></i></button>
+              <button class="btn btn-outline btn-sm" onclick="deleteItem('${i.id}')"><i class="fas fa-trash"></i></button>
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    function toggleNewItem() {
+      document.getElementById('newItemForm').classList.toggle('open');
+    }
+
+    document.getElementById('itemStatus').addEventListener('change', e => {
+      document.getElementById('newHolderRow').style.display = IN_USE_STATUSES.includes(e.target.value) ? 'block' : 'none';
+    });
+    document.getElementById('itemCategory').addEventListener('change', updateAssetTagHint);
+
+    async function submitItem() {
+      const name = document.getElementById('itemName').value.trim();
+      if (!name) { alert('Name is required.'); return; }
+      const status = document.getElementById('itemStatus').value;
+      const body = {
+        name,
+        asset_tag: document.getElementById('itemAssetTag').value.trim(),
+        category: document.getElementById('itemCategory').value,
+        status,
+        in_charge: IN_USE_STATUSES.includes(status) ? document.getElementById('itemHolder').value.trim() : '',
+        manufacturer: document.getElementById('itemManufacturer').value.trim(),
+        model_number: document.getElementById('itemModel').value.trim(),
+        serial_number: document.getElementById('itemSerial').value.trim(),
+        location: document.getElementById('itemLocation').value.trim(),
+        tags: document.getElementById('itemTags').value.trim(),
+        notes: document.getElementById('itemNotes').value.trim(),
+      };
+      const res = await fetch('/api/inventory', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) { const err = await res.json().catch(() => ({})); alert(err.error || 'Could not add equipment.'); return; }
+      ['itemName', 'itemAssetTag', 'itemManufacturer', 'itemModel', 'itemSerial', 'itemLocation', 'itemHolder', 'itemTags', 'itemNotes'].forEach(id => document.getElementById(id).value = '');
+      document.getElementById('itemStatus').value = 'available';
+      document.getElementById('newHolderRow').style.display = 'none';
+      toggleNewItem();
+      loadRoster();
+      fetchItems();
+    }
+
+    async function deleteItem(id) {
+      if (!confirm('Delete this equipment record? This cannot be undone.')) return;
+      await fetch('/api/inventory/' + id, { method: 'DELETE' });
+      fetchItems();
+    }
+
+    function openEditModal(id) {
+      const item = allItems.find(i => i.id === id);
+      if (!item) return;
+      document.getElementById('editId').value = id;
+      document.getElementById('editName').value = item.name || '';
+      document.getElementById('editAssetTag').value = item.asset_tag || '';
+      document.getElementById('editCategory').value = item.category || 'misc';
+      document.getElementById('editStatus').value = item.status || 'available';
+      document.getElementById('editManufacturer').value = item.manufacturer || '';
+      document.getElementById('editModel').value = item.model_number || '';
+      document.getElementById('editSerial').value = item.serial_number || '';
+      document.getElementById('editLocation').value = item.location || '';
+      document.getElementById('editHolder').value = item.in_charge || item.holder || '';
+      document.getElementById('editTags').value = (item.tags || []).join(', ');
+      document.getElementById('editNotes').value = item.notes || '';
+      toggleEditHolderRow();
+      document.getElementById('editModal').classList.add('open');
+    }
+
+    function toggleEditHolderRow() {
+      document.getElementById('editHolderRow').style.display =
+        IN_USE_STATUSES.includes(document.getElementById('editStatus').value) ? 'block' : 'none';
+    }
+    document.getElementById('editStatus').addEventListener('change', toggleEditHolderRow);
+
+    function closeEditModal() { document.getElementById('editModal').classList.remove('open'); }
+
+    async function saveEdit() {
+      const id = document.getElementById('editId').value;
+      const status = document.getElementById('editStatus').value;
+      const body = {
+        name: document.getElementById('editName').value.trim(),
+        asset_tag: document.getElementById('editAssetTag').value.trim(),
+        category: document.getElementById('editCategory').value,
+        status,
+        in_charge: IN_USE_STATUSES.includes(status) ? document.getElementById('editHolder').value.trim() : '',
+        manufacturer: document.getElementById('editManufacturer').value.trim(),
+        model_number: document.getElementById('editModel').value.trim(),
+        serial_number: document.getElementById('editSerial').value.trim(),
+        location: document.getElementById('editLocation').value.trim(),
+        tags: document.getElementById('editTags').value.trim(),
+        notes: document.getElementById('editNotes').value.trim(),
+      };
+      await fetch('/api/inventory/' + id, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      closeEditModal();
+      loadRoster();
+      fetchItems();
+    }
+
+    function openCheckoutModal(id) {
+      document.getElementById('checkoutItemId').value = id;
+      document.getElementById('checkoutHolder').value = localStorage.getItem('inventory_user') || '';
+      document.getElementById('checkoutStatus').value = 'in_use';
+      document.getElementById('checkoutNote').value = '';
+      document.getElementById('checkoutModal').classList.add('open');
+    }
+    function closeCheckoutModal() { document.getElementById('checkoutModal').classList.remove('open'); }
+    async function submitCheckout() {
+      const id = document.getElementById('checkoutItemId').value;
+      const inCharge = document.getElementById('checkoutHolder').value.trim();
+      if (!inCharge) { alert('Please pick who is in charge.'); return; }
+      localStorage.setItem('inventory_user', inCharge);
+      const res = await fetch(`/api/inventory/${id}/checkout`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          in_charge: inCharge,
+          status: document.getElementById('checkoutStatus').value,
+          notes: document.getElementById('checkoutNote').value.trim(),
+        }),
+      });
+      if (!res.ok) { const err = await res.json().catch(() => ({})); alert(err.error || 'Could not take it out.'); return; }
+      closeCheckoutModal();
+      loadRoster();
+      fetchItems();
+    }
+
+    function openCheckinModal(id) {
+      document.getElementById('checkinItemId').value = id;
+      document.getElementById('checkinUser').value = localStorage.getItem('inventory_user') || '';
+      document.getElementById('checkinLocation').value = '';
+      document.getElementById('checkinModal').classList.add('open');
+    }
+    function closeCheckinModal() { document.getElementById('checkinModal').classList.remove('open'); }
+    async function submitCheckin() {
+      const id = document.getElementById('checkinItemId').value;
+      const user = document.getElementById('checkinUser').value.trim();
+      if (user) localStorage.setItem('inventory_user', user);
+      const res = await fetch(`/api/inventory/${id}/checkin`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user, location: document.getElementById('checkinLocation').value.trim() }),
+      });
+      if (!res.ok) { const err = await res.json().catch(() => ({})); alert(err.error || 'Could not check in.'); return; }
+      closeCheckinModal();
+      fetchItems();
+    }
+
+    function openHistoryModal(id) {
+      const item = allItems.find(i => i.id === id);
+      if (!item) return;
+      const hist = (item.history || []).slice().reverse();
+      const rows = hist.length ? hist.map(h => {
+        const when = h.timestamp ? new Date(h.timestamp).toLocaleString() : '';
+        const detail = h.detail ? ` — ${esc(h.detail)}` : '';
+        return `<div style="padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.06);">
+          <b style="color:#22f5ff;">${esc(h.action)}</b> by ${esc(h.user || 'Unknown')}${detail}
+          <div style="color:#64748b;font-size:0.9em;">${when}</div>
+        </div>`;
+      }).join('') : '<p style="color:#64748b;">No history yet.</p>';
+      document.getElementById('historyContent').innerHTML =
+        `<div style="margin-bottom:8px;color:#94a3b8;">${esc(item.name)}${item.asset_tag ? ' · ' + esc(item.asset_tag) : ''}</div>` + rows;
+      document.getElementById('historyModal').classList.add('open');
+    }
+    function closeHistoryModal() { document.getElementById('historyModal').classList.remove('open'); }
+
+    function applyFilters() {
+      const q = document.getElementById('searchInput').value.trim();
+      const category = document.getElementById('categoryFilter').value;
+      const status = document.getElementById('statusFilter').value;
+      const location = document.getElementById('locationFilter').value.trim();
+      const params = new URLSearchParams();
+      if (q) params.set('q', q);
+      if (category) params.set('category', category);
+      if (status) params.set('status', status);
+      if (location) params.set('location', location);
+      const qs = params.toString();
+      fetchItems(qs ? '?' + qs : '');
+    }
+
+    function debounce(fn, ms) {
+      let t;
+      return function(...args) { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
+    }
+
+    document.getElementById('searchInput').addEventListener('input', debounce(applyFilters, 300));
+    document.getElementById('categoryFilter').addEventListener('change', applyFilters);
+    document.getElementById('statusFilter').addEventListener('change', applyFilters);
+    document.getElementById('locationFilter').addEventListener('input', debounce(applyFilters, 300));
+
+    async function openExportModal() {
+      const res = await fetch('/api/inventory/export');
+      document.getElementById('exportContent').value = await res.text();
+      document.getElementById('exportModal').classList.add('open');
+    }
+    function closeExportModal() { document.getElementById('exportModal').classList.remove('open'); }
+    async function copyExport() {
+      const ok = await copyTextToClipboard(document.getElementById('exportContent').value);
+      const btn = document.getElementById('exportCopyBtn');
+      btn.innerHTML = ok ? '<i class="fas fa-check"></i> Copied!' : '<i class="fas fa-exclamation-triangle"></i> Copy failed';
+      setTimeout(() => { btn.innerHTML = '<i class="fas fa-copy"></i> Copy All'; }, 1500);
+    }
+    function downloadMd() {
+      const blob = new Blob([document.getElementById('exportContent').value], { type: 'text/markdown' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'inventory.md';
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+    async function downloadCsv() {
+      const res = await fetch('/api/inventory/export?format=csv');
+      const blob = new Blob([await res.text()], { type: 'text/csv' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'inventory.csv';
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') {
+        closeEditModal(); closeCheckoutModal(); closeCheckinModal(); closeHistoryModal(); closeExportModal();
+        document.getElementById('newItemForm').classList.remove('open');
+      }
+    });
+
+    populateCategorySelects();
+    updateAssetTagHint();
+    loadRoster();
+    fetchItems();
+  </script>
+</body>
+</html>

@@ -269,7 +269,15 @@
     <h1><i class="fas fa-brain"></i> Brain Dump</h1>
     <div>
       <span style="font-size:0.75em;color:#555;margin-right:15px;"><span class="kbd">N</span> New &nbsp;<span class="kbd">/</span> Search &nbsp;<span class="kbd">Esc</span> Close</span>
+      <a href="/workspace" class="back-link" style="margin-right:15px;"><i class="fas fa-sitemap"></i> My Workspace</a>
       <a href="/" class="back-link"><i class="fas fa-arrow-left"></i> Back to Chat</a>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <div class="hint" style="flex:1;min-width:200px;">
+      <i class="fas fa-users"></i> This is the shared <strong>Team Board</strong> — everything here is visible to everyone.
+      Manage your own private projects &amp; knowledge bases in <a href="/workspace" style="color:#22f5ff;">My Workspace</a>.
     </div>
   </div>
 
@@ -359,9 +367,19 @@
     const savedAuthor = localStorage.getItem('braindump_author') || '';
     if (savedAuthor) document.getElementById('entryAuthor').value = savedAuthor;
 
+    function authHeaders(extra = {}) { return extra; }
+
+    function canManageEntry(e) {
+      // The team board only lets you manage the open shared notes here.
+      // Project notes are managed by their owner in My Workspace (the server
+      // enforces this regardless of what buttons render).
+      return (e.project_id || 'general') === 'general';
+    }
+
     // ── API helpers ───────────────────────────
     async function fetchEntries(params = '') {
-      const res = await fetch('/api/braindump' + params);
+      const res = await fetch('/api/braindump' + params, { headers: authHeaders() });
+      if (!res.ok) { allEntries = []; renderEntries(); updateFilters(); return; }
       allEntries = await res.json();
       renderEntries();
       updateFilters();
@@ -409,15 +427,32 @@
           return `<button class="reaction-btn ${active}" onclick="react('${e.id}','${r}')">${r}${count ? '<span class="reaction-count">' + count + '</span>' : ''}</button>`;
         }).join('');
 
-        return `
-          <div class="entry-card ${pinClass}">
-            <div class="entry-actions">
-              <button onclick="copyEntry('${e.id}')" title="Copy"><i class="fas fa-copy"></i></button>
+        const projectId = e.project_id || 'general';
+        const isOwned = projectId !== 'general';
+        const visibility = e.visibility || (isOwned ? 'private' : 'team');
+        const manageable = canManageEntry(e);
+        const visIcon = visibility === 'private' ? 'fa-lock' : 'fa-users';
+        const visLabel = visibility === 'private' ? 'Private' : 'Team';
+        const projName = e.project_name || projectId;
+        const ownerSuffix = e.owner_name ? ' · ' + esc(e.owner_name) : '';
+        const projectBadge = isOwned
+          ? `<span class="tag" style="cursor:default;"><i class="fas fa-folder"></i> ${esc(projName)}${ownerSuffix}</span>`
+          : '';
+        const sourceBadge = e.source === 'agent' ? '<span class="tag" style="cursor:default;">🤖 agent</span>' : '';
+
+        const manageButtons = manageable ? `
               <button onclick="togglePin('${e.id}', ${!e.pinned})" title="${e.pinned ? 'Unpin' : 'Pin'}">
                 <i class="fas fa-thumbtack ${pinIcon}"></i>
               </button>
               <button onclick="openEditModal('${e.id}')" title="Edit"><i class="fas fa-edit"></i></button>
               <button onclick="deleteEntry('${e.id}')" title="Delete"><i class="fas fa-trash"></i></button>
+        ` : '';
+
+        return `
+          <div class="entry-card ${pinClass}">
+            <div class="entry-actions">
+              <button onclick="copyEntry('${e.id}')" title="Copy"><i class="fas fa-copy"></i></button>
+              ${manageButtons}
             </div>
             <div class="entry-title">${e.pinned ? '📌 ' : ''}${esc(e.title)}</div>
             <div class="entry-meta">
@@ -425,7 +460,7 @@
               <span><i class="fas fa-clock"></i> ${date}${edited}</span>
             </div>
             <div class="entry-content">${content}</div>
-            ${tags ? '<div class="entry-tags">' + tags + '</div>' : ''}
+            ${(tags || projectBadge || sourceBadge) ? '<div class="entry-tags">' + projectBadge + sourceBadge + tags + '</div>' : ''}
             <div class="reactions">${reactionHtml}</div>
           </div>`;
       }).join('');
@@ -493,11 +528,18 @@
 
       localStorage.setItem('braindump_author', author);
 
-      await fetch('/api/braindump', {
+      const body = { author, title, content, tags };
+
+      const res = await fetch('/api/braindump', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ author, title, content, tags }),
+        headers: authHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify(body),
       });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        alert(err.error || 'Could not post entry.');
+        return;
+      }
 
       document.getElementById('entryTitle').value = '';
       document.getElementById('entryContent').value = '';
@@ -508,14 +550,15 @@
 
     async function deleteEntry(id) {
       if (!confirm('Delete this entry?')) return;
-      await fetch('/api/braindump/' + id, { method: 'DELETE' });
+      const res = await fetch('/api/braindump/' + id, { method: 'DELETE', headers: authHeaders() });
+      if (!res.ok) { const err = await res.json().catch(() => ({})); alert(err.error || 'Could not delete entry.'); return; }
       fetchEntries();
     }
 
     async function togglePin(id, pinned) {
       await fetch('/api/braindump/' + id, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: authHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({ pinned }),
       });
       fetchEntries();
@@ -540,12 +583,14 @@
       const title = document.getElementById('editTitle').value.trim();
       const content = document.getElementById('editContent').value.trim();
       const tags = document.getElementById('editTags').value.trim();
+      const body = { title, content, tags };
 
-      await fetch('/api/braindump/' + id, {
+      const res = await fetch('/api/braindump/' + id, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, content, tags }),
+        headers: authHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify(body),
       });
+      if (!res.ok) { const err = await res.json().catch(() => ({})); alert(err.error || 'Could not save changes.'); return; }
 
       closeEditModal();
       fetchEntries();
@@ -612,7 +657,7 @@
       const me = localStorage.getItem('braindump_author') || 'Anonymous';
       await fetch('/api/braindump/' + entryId, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: authHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({ react: { emoji, user: me } }),
       });
       fetchEntries();
@@ -620,7 +665,7 @@
 
     // ── Export ─────────────────────────────────
     async function openExportModal() {
-      const res = await fetch('/api/braindump/export');
+      const res = await fetch('/api/braindump/export', { headers: authHeaders() });
       const md = await res.text();
       document.getElementById('exportContent').value = md;
       document.getElementById('exportModal').classList.add('open');
