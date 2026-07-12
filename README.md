@@ -2,18 +2,19 @@
 
 # 💬 Intra-Chat
 
-**A self-hosted, real-time chat for your team's local network — with file
-sharing, a searchable command manual, a shared brain-dump board, personal
-workspaces, a project knowledge base, a lab-equipment inventory, an agent
-API, and an optional local-LLM summariser.**
+### The offline-first team hub for labs, workshops, and robotics crews.
+
+**Chat, knowledge, files, and gear — all on your own LAN. No cloud, no
+accounts, no subscriptions. One Python process, any browser.**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![Flask](https://img.shields.io/badge/Flask-3.x-000000.svg)](https://flask.palletsprojects.com/)
 [![Socket.IO](https://img.shields.io/badge/Socket.IO-realtime-010101.svg)](https://socket.io/)
 [![Local-first](https://img.shields.io/badge/local--first-LAN-22f5ff.svg)](#)
+[![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
-<sub>No accounts. No cloud. No tracking. One Python process and a browser.</sub>
+<sub>No accounts. No cloud. No tracking. Your data never leaves the building.</sub>
 
 <br/>
 
@@ -23,46 +24,77 @@ API, and an optional local-LLM summariser.**
 
 ---
 
-## Why Intra-Chat?
+## The problem
 
-Most team-chat tools assume the cloud. Intra-Chat assumes the opposite:
-**a single Python process on your LAN**, accessed by everyone over a browser.
-No SaaS subscriptions, no third-party servers, no data leaving your network.
+Slack and Discord are built for the cloud. For a **lab bench, a workshop, or a
+field robot on a private network**, that model is backwards:
 
-It started as an internal tool for a robotics team that wanted a place to:
+- Your notes, IP, and calibration data live on someone else's servers.
+- The free tier eats your message history right when you need it.
+- Half your machines have no internet — but they're all on the same LAN.
+- "Where's the lidar?" and "what was that launch command?" get lost in the scroll.
 
-- 🚀 Drop **commands and snippets** into a shared scrollback that doesn't
-  vanish when Slack forgets it.
-- 📚 Pin the good stuff into a **searchable tech manual** with one keystroke.
-- 🧠 Capture half-baked ideas in a **brain-dump board** with reactions and
-  tags — independent from the chat noise.
-- 🔔 Stay aware via **real-time notifications** (with sound + browser push)
-  when teammates publish something worth seeing.
-- 🤖 Get **AI summaries** of long conversations using a model running on
-  your own machine (Ollama).
+## The answer
 
-It is intentionally small. One file (`app.py`), one HTML template per
-feature, JSON files for storage. The whole thing fits in your head.
+**Intra-Chat is a single self-hosted app your whole team reaches over a browser.**
+It bundles the handful of tools a hands-on team actually needs into one place:
+real-time chat, a searchable command manual, per-project knowledge bases, file
+sharing, a lab-equipment inventory, and an agent API — with an optional
+**local** LLM for summaries. Nothing leaves your network.
 
-## Features
+```bash
+git clone https://github.com/tvpian/Intra-Chat.git && cd Intra-Chat
+python -m pip install -r requirements.txt
+python setup_password.py && python app.py     # → http://localhost:5656
+```
+
+That's the entire install. Point every phone and laptop on the LAN at the URL
+and you're running.
+
+## Why teams pick it
+
+- 🔒 **Truly local-first.** One process on your LAN. No SaaS bill, no third
+  party, no telemetry. Works with the internet unplugged.
+- 🪶 **Radically simple.** One `app.py`, one template per feature, plain JSON
+  on disk. Easy to read, fork, back up, and trust. The whole thing fits in
+  your head.
+- 🧠 **It remembers.** Pin commands to a searchable manual, file long-form
+  notes into per-project knowledge bases — the durable memory the chat scroll
+  never gives you.
+- 🔧 **Built for the bench.** A real asset inventory with printable labels,
+  owners, and check-out history — because "who has the lidar?" deserves a
+  better answer than scrolling.
+- 🤖 **Agent-ready.** Scoped API keys let coding agents and scripts push
+  knowledge straight into a project. Optional on-box Ollama summaries keep AI
+  local too.
+- 📱 **Everywhere on the LAN.** Fully responsive — the tablet zip-tied to the
+  robot and the desktop in the office get the same UI.
+
+## Who it's for
+
+Robotics teams, hardware labs, makerspaces, research groups, home labs,
+air-gapped or privacy-sensitive environments — anyone who shares a network and
+wants their conversations, know-how, and equipment in one place they control.
+
+## Features at a glance
 
 |   | Feature | What it does |
 |---|---------|--------------|
-| 💬 | **Real-time chat** | Socket.IO-powered, persistent across reloads, message history with sane retention. |
+| 💬 | **Real-time chat** | Socket.IO-powered, persistent across reloads, with sane message-history retention. |
 | 📁 | **Smart file uploads** | Drag-and-drop with auto-categorisation across 14 buckets (code, images, robotics, configs, models, …). |
-| 📒 | **Tech manual** | Press `Ctrl+E` on any chat message to pin it into a searchable reference book with a category. |
-| 🧠 | **Brain dump board** | Long-form, taggable, reaction-able knowledge entries. Public to the team by default, export as Markdown. |
-| 🗂️ | **Personal workspaces** | Per-member sign-in with a personal passcode. Organise notes into **projects**, keep them private or share with the team. Toggle a whole project public in one click. |
-| 📚 | **Project knowledge base** | Searchable, tagged knowledge entries grouped by project — the durable memory behind the chat noise. |
-| 📦 | **Lab equipment inventory** | Track assets with **printable, meaningful tags** (e.g. `LAB138-SEN-0003` = lab no · category · procurement order), an **In-charge** owner picked from your team roster, and statuses (Available / In Use / Borrowed / Lost / Retired / Broken). Check-out / check-in with history, CSV/Markdown export. |
-| 🤖 | **Agent / API integration** | Issue scoped **API keys** so coding agents and scripts can push knowledge programmatically. See [docs/AGENT_INTEGRATION.md](docs/AGENT_INTEGRATION.md). |
-| 🔔 | **Live notifications** | Toast + bell badge + browser notifications on every new brain-dump or system event. |
+| 📒 | **Tech manual** | Press `Ctrl+E` on any chat message to pin it into a searchable reference book, tagged by category. |
+| 🧠 | **Brain-dump board** | Long-form, taggable, reaction-able knowledge entries. Public to the team by default; export as Markdown. |
+| 🗂️ | **Personal workspaces** | Per-member sign-in with a personal passcode. Group notes into **projects**, keep them private or share them — flip a whole project public in one click. |
+| 📚 | **Project knowledge base** | Searchable, tagged knowledge grouped by project: the durable memory behind the chat noise. |
+| 📦 | **Lab equipment inventory** | Assets with **printable, meaningful tags** (`LAB138-SEN-0003` = lab no · category · procurement order), an **In-charge** owner from your roster, six statuses, check-out/check-in history, and CSV/Markdown export. |
+| 🤖 | **Agent / API integration** | Scoped **API keys** so agents and scripts push knowledge programmatically. See [docs/AGENT_INTEGRATION.md](docs/AGENT_INTEGRATION.md). |
+| 🔔 | **Live notifications** | Toast + bell badge + browser push on every new brain-dump or system event. |
 | 🚨 | **Broadcast alerts** | `/alert your message` plays a sound for every connected client — perfect for "build's broken". |
-| 📚 | **Team docs** | Point `TEAM_DOCS_PATH` at a folder of `.md` files and they show up at `/docs` and inside the manual search. |
-| 🤖 | **AI summarise** | `/summarize` calls a local [Ollama](https://ollama.com) model. No API keys. No data leaves your box. |
-| 🔐 | **Auth** | Single shared password + per-member passcodes + IP allow-listing + lockout-on-brute-force. |
-| ⌨️ | **Power-user shortcuts** | `Ctrl+H/M/U/E/B/L`, slash-commands, copy-with-username-stripped, message export, … |
-| 📱 | **Mobile-friendly** | Fully responsive — every page (chat, workspace, inventory, knowledge, manual, API keys) adapts to phones and small screens. |
+| 📄 | **Team docs** | Point `TEAM_DOCS_PATH` at a folder of `.md` files; they surface at `/docs` and inside manual search. |
+| 🦙 | **Local AI summaries** | `/summarize` calls a model on **your** machine via [Ollama](https://ollama.com). No API keys, no data egress. |
+| 🔐 | **Layered auth** | Shared login password + per-member passcodes + IP allow-listing + brute-force lockout. |
+| ⌨️ | **Power-user UX** | Slash-commands, `Ctrl+H/M/U/E/B/L` shortcuts, copy-with-username-stripped, message export. |
+| 📱 | **Fully responsive** | Every page — chat, workspace, inventory, knowledge, manual, API keys — adapts to phones and small screens. |
 
 ## Screenshots
 
@@ -120,6 +152,8 @@ a project programmatically — no browser required.
 
 ## Quick start
 
+**Requirements:** Python 3.8+ and a browser. That's it.
+
 ```bash
 git clone https://github.com/tvpian/Intra-Chat.git
 cd Intra-Chat
@@ -129,12 +163,14 @@ python setup_password.py        # interactive — writes .env
 python app.py                   # http://localhost:5656
 ```
 
-That's the whole installation. Open the URL in any browser on your LAN, type
-the password you just chose, and you're in.
+Open the URL in any browser on your LAN, type the password you just chose, and
+you're in. To let teammates join, share your machine's LAN address (e.g.
+`http://192.168.1.42:5656`) — the server listens on `0.0.0.0` by default.
 
 > **Heads up:** `setup_password.py` sets `chmod 600` on the resulting `.env`.
-> It contains your login password and a Flask session signing key — don't
-> commit it.
+> It holds your login password and a Flask session-signing key — never commit
+> it. Runtime data (chat, notes, inventory, keys) stays in local JSON files
+> that are already git-ignored.
 
 ## Configuration
 
@@ -218,31 +254,36 @@ Keyboard shortcuts (anywhere on the chat page):
 ```
                      ┌─────────────────────────────────────┐
                      │            Browser (LAN)            │
-                     │  ┌─────────────────────────────┐    │
-                     │  │ index.html / Socket.IO JS   │    │
-                     │  └────────────┬────────────────┘    │
+                     │   chat · workspace · inventory ·    │
+                     │   knowledge · manual · API keys     │
                      └───────────────│─────────────────────┘
-                                     │  WebSocket + HTTP
+                                     │  WebSocket + HTTP + REST
                      ┌───────────────▼─────────────────────┐
                      │      app.py — Flask + Socket.IO     │
                      │  ┌────────┐ ┌────────┐ ┌─────────┐  │
                      │  │  auth  │ │ uploads│ │ summary │──┼──► Ollama
-                     │  └────────┘ └────────┘ └─────────┘  │     (local)
+                     │  │ + keys │ │        │ │         │  │    (local)
+                     │  └────────┘ └────────┘ └─────────┘  │
                      │  ┌────────┐ ┌────────┐ ┌─────────┐  │
-                     │  │ manual │ │ brain  │ │  notif  │  │
+                     │  │ manual │ │ brain/ │ │inventory│  │
+                     │  │ + docs │ │  KB    │ │ + notif │  │
                      │  └────────┘ └────────┘ └─────────┘  │
                      └────────────────┬────────────────────┘
                                       │
                               ┌───────▼────────┐
                               │   JSON files   │
-                              │  (chat, manual,│
-                              │  braindump,    │
-                              │  notifications)│
+                              │ chat · manual ·│
+                              │ braindump ·    │
+                              │ projects ·     │
+                              │ members ·      │
+                              │ inventory ·    │
+                              │ api_keys       │
                               └────────────────┘
 ```
 
-Storage is intentionally JSON-on-disk — easy to inspect, back up, and migrate.
-A future SQLite backend would be a welcome contribution.
+Storage is intentionally JSON-on-disk — easy to inspect, back up, `grep`, and
+migrate. Writes are atomic (temp file + rename + `.bak`). A future SQLite
+backend would be a welcome contribution.
 
 ## Deployment
 
@@ -307,6 +348,9 @@ Areas where help is especially welcome:
 ## License
 
 [MIT](LICENSE) © 2026 [tvpian](https://github.com/tvpian)
+
+Free to use, fork, and self-host. If Intra-Chat is useful to your team, a
+⭐ on the repo helps others find it.
 
 ---
 
