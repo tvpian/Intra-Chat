@@ -98,18 +98,18 @@ wants their conversations, know-how, and equipment in one place they control.
 
 ## Screenshots
 
-<table>
+<table align="center">
 <tr>
-<td align="center" width="50%"><b>Login</b><br/><img src="docs/screenshots/01-login.png" alt="Login"/></td>
-<td align="center" width="50%"><b>Chat</b><br/><img src="docs/screenshots/02-chat.png" alt="Chat"/></td>
+<td align="center" width="50%"><b>Login</b><br/><img src="docs/screenshots/01-login.png" alt="Login" width="100%"/></td>
+<td align="center" width="50%"><b>Chat</b><br/><img src="docs/screenshots/02-chat.png" alt="Chat" width="100%"/></td>
 </tr>
 <tr>
-<td align="center"><b>History</b><br/><img src="docs/screenshots/03-history.png" alt="History"/></td>
-<td align="center"><b>Tech Manual</b><br/><img src="docs/screenshots/04-manual.png" alt="Tech Manual"/></td>
+<td align="center" width="50%"><b>History</b><br/><img src="docs/screenshots/03-history.png" alt="History" width="100%"/></td>
+<td align="center" width="50%"><b>Tech Manual</b><br/><img src="docs/screenshots/04-manual.png" alt="Tech Manual" width="100%"/></td>
 </tr>
 <tr>
-<td align="center"><b>Brain Dump</b><br/><img src="docs/screenshots/05-braindump.png" alt="Brain Dump"/></td>
-<td align="center"><b>Notifications</b><br/><img src="docs/screenshots/06-notifications.png" alt="Notifications"/></td>
+<td align="center" width="50%"><b>Brain Dump</b><br/><img src="docs/screenshots/05-braindump.png" alt="Brain Dump" width="100%"/></td>
+<td align="center" width="50%"><b>Notifications</b><br/><img src="docs/screenshots/06-notifications.png" alt="Notifications" width="100%"/></td>
 </tr>
 </table>
 
@@ -119,10 +119,10 @@ Every member gets a personal workspace. Organise notes into **projects**,
 keep them private or flip a whole project **Public** to share it on the team
 board. Each project is its own searchable, taggable knowledge base.
 
-<table>
+<table align="center">
 <tr>
-<td align="center" width="50%"><b>My Workspace</b><br/><img src="docs/screenshots/07-workspace.png" alt="Personal workspace with projects"/></td>
-<td align="center" width="50%"><b>Knowledge base</b><br/><img src="docs/screenshots/08-knowledge.png" alt="Project knowledge base entries"/></td>
+<td align="center" width="50%"><b>My Workspace</b><br/><img src="docs/screenshots/07-workspace.png" alt="Personal workspace with projects" width="100%"/></td>
+<td align="center" width="50%"><b>Knowledge base</b><br/><img src="docs/screenshots/08-knowledge.png" alt="Project knowledge base entries" width="100%"/></td>
 </tr>
 </table>
 
@@ -133,10 +133,10 @@ category · procurement order), an **In-charge** owner picked from your team
 roster, and a full status set (Available / In Use / Borrowed / Lost / Retired
 / Broken). Check-out / check-in with history and CSV/Markdown export.
 
-<table>
+<table align="center">
 <tr>
-<td align="center" width="60%"><b>Inventory</b><br/><img src="docs/screenshots/09-inventory.png" alt="Lab equipment inventory"/></td>
-<td align="center" width="40%"><b>On a phone</b><br/><img src="docs/screenshots/11-mobile.png" alt="Inventory on a mobile screen"/></td>
+<td align="center" width="60%"><b>Inventory</b><br/><img src="docs/screenshots/09-inventory.png" alt="Lab equipment inventory" width="100%"/></td>
+<td align="center" width="40%"><b>On a phone</b><br/><img src="docs/screenshots/11-mobile.png" alt="Inventory on a mobile screen" width="100%"/></td>
 </tr>
 </table>
 
